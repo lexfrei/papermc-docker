@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jre-alpine AS build
+FROM eclipse-temurin:21.0.6_7-jre-alpine AS build
 
 # Download and prepare RCON health check script
 RUN mkdir -p /scripts && \
@@ -7,7 +7,7 @@ RUN mkdir -p /scripts && \
     chmod +x /scripts/mc-health-check
 
 # Final stage
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:21.0.6_7-jre
 
 # Configure environment
 EXPOSE 25565/tcp 25565/udp 8123/tcp
