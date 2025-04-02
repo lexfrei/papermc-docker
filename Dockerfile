@@ -1,8 +1,5 @@
 FROM eclipse-temurin:21-jre-alpine AS build
 
-# Install necessary build tools
-RUN apk add --no-cache curl jq
-
 # Download and prepare RCON health check script
 RUN mkdir -p /scripts && \
     echo '#!/bin/sh' > /scripts/mc-health-check && \
@@ -29,6 +26,7 @@ ENV PAPERMC_FLAGS="--nojline" \
 
 # Install dependencies and set up user in a single layer
 RUN apt-get update && \
+  # Install webp for Dynmap plugin image processing and optimization
   apt-get install --no-install-recommends -y webp && \
   rm -rf /var/lib/apt/lists/* && \
   mkdir -p /data /opt/minecraft /data/plugins/update && \
