@@ -38,6 +38,10 @@ jobs:
   build:
     needs: prepare
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
     strategy:
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
     steps:
@@ -63,7 +67,35 @@ jobs:
             type=raw,value=${{ matrix.version }}
             ${{ matrix.version == needs.prepare.outputs.latest && 'type=raw,value=latest' || '' }}
 
-      - name: Build and push
+      - name: Build
+        uses: docker/build-push-action@v5
+        id: build
+        with:
+          context: .
+          platforms: linux/amd64
+          load: true
+          build-args: |
+            DOWNLOAD_URL=${{ matrix.url }}
+          tags: lexfrei/papermc:${{ matrix.version }}-${{ matrix.build }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: lexfrei/papermc:${{ matrix.version }}-${{ matrix.build }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+          
+      - name: Build and push all platforms
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -73,3 +105,5 @@ jobs:
             DOWNLOAD_URL=${{ matrix.url }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

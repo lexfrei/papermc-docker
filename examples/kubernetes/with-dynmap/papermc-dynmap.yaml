@@ -1,0 +1,115 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: papermc
+  labels:
+    app: papermc
+spec:
+  serviceName: papermc
+  replicas: 1
+  selector:
+    matchLabels:
+      app: papermc
+  template:
+    metadata:
+      labels:
+        app: papermc
+    spec:
+      containers:
+        - name: papermc
+          image: lexfrei/papermc:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 25565
+              protocol: TCP
+              name: minecraft-tcp
+            - containerPort: 25565
+              protocol: UDP
+              name: minecraft-udp
+            - containerPort: 8123
+              protocol: TCP
+              name: dynmap
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          resources:
+            requests:
+              memory: "4G"
+              cpu: "1000m"
+            limits:
+              memory: "4G"
+              cpu: "2000m"
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: papermc
+  labels:
+    app: papermc
+spec:
+  ports:
+    - port: 25565
+      targetPort: minecraft-tcp
+      protocol: TCP
+      name: minecraft-tcp
+    - port: 25565
+      targetPort: minecraft-udp
+      protocol: UDP
+      name: minecraft-udp
+    - port: 8123
+      targetPort: dynmap
+      protocol: TCP
+      name: dynmap
+  selector:
+    app: papermc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minecraft-external
+  labels:
+    app: papermc
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 25565
+      targetPort: minecraft-tcp
+      protocol: TCP
+      name: minecraft-tcp
+    - port: 25565
+      targetPort: minecraft-udp
+      protocol: UDP
+      name: minecraft-udp
+    - port: 8123
+      targetPort: dynmap
+      protocol: TCP
+      name: dynmap-external
+  selector:
+    app: papermc
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dynmap-ingress
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  rules:
+    - host: map.example.com  # Change to your actual domain
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: papermc
+                port:
+                  name: dynmap

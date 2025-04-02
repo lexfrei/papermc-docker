@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: papermc
+  labels:
+    app: papermc
+spec:
+  serviceName: papermc
+  replicas: 1
+  selector:
+    matchLabels:
+      app: papermc
+  template:
+    metadata:
+      labels:
+        app: papermc
+    spec:
+      containers:
+        - name: papermc
+          image: lexfrei/papermc:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 25565
+              protocol: TCP
+              name: minecraft-tcp
+            - containerPort: 25565
+              protocol: UDP
+              name: minecraft-udp
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          resources:
+            requests:
+              memory: "4G"
+              cpu: "1000m"
+            limits:
+              memory: "4G"
+              cpu: "2000m"
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: papermc
+  labels:
+    app: papermc
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 25565
+      targetPort: minecraft-tcp
+      protocol: TCP
+      name: minecraft-tcp
+    - port: 25565
+      targetPort: minecraft-udp
+      protocol: UDP
+      name: minecraft-udp
+  selector:
+    app: papermc

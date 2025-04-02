@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  papermc:
+    image: lexfrei/papermc:latest
+    container_name: minecraft-server
+    ports:
+      - "25565:25565/tcp"
+      - "25565:25565/udp"
+      # Uncomment if you're using Dynmap
+      # - "8123:8123/tcp"
+    volumes:
+      - ./data:/data
+    # Set resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+    restart: unless-stopped
