@@ -19,7 +19,7 @@ jobs:
 
       - name: Install goPaperMC
         run: |
-          go install github.com/lexfrei/goPaperMC/cmd/papermc@latest
+          go install github.com/lexfrei/goPaperMC/cmd/papermc@v0.0.1
 
       - name: Get Build Matrix
         id: set-matrix
