@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jre-alpine AS build
+FROM eclipse-temurin:21.0.6_7-jre-alpine AS build
 
 # Install necessary build tools
 RUN apk add --no-cache curl jq
@@ -10,7 +10,7 @@ RUN mkdir -p /scripts && \
     chmod +x /scripts/mc-health-check
 
 # Final stage
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:21.0.6_7-jre
 
 # Configure environment
 EXPOSE 25565/tcp 25565/udp 8123/tcp
