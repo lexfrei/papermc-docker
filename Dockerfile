@@ -1,7 +1,19 @@
+FROM eclipse-temurin:21-jre-alpine AS build
+
+# Install necessary build tools
+RUN apk add --no-cache curl jq
+
+# Download and prepare RCON health check script
+RUN mkdir -p /scripts && \
+    echo '#!/bin/sh' > /scripts/mc-health-check && \
+    echo 'rcon-cli ping > /dev/null 2>&1' >> /scripts/mc-health-check && \
+    chmod +x /scripts/mc-health-check
+
+# Final stage
 FROM eclipse-temurin:21-jre
 
 # Configure environment
-EXPOSE 25565/tcp 25565/udp
+EXPOSE 25565/tcp 25565/udp 8123/tcp
 VOLUME /data
 WORKDIR /data
 
@@ -19,14 +31,19 @@ ENV PAPERMC_FLAGS="--nojline" \
 RUN apt-get update && \
   apt-get install --no-install-recommends -y webp && \
   rm -rf /var/lib/apt/lists/* && \
-  mkdir -p /data /opt/minecraft && \
+  mkdir -p /data /opt/minecraft /data/plugins/update && \
   chown -R 9001:9001 /data /opt/minecraft
 
-# Copy rcon-cli
+# Copy RCON and health check script
 COPY --from=docker.io/itzg/rcon-cli:${RCON_VERSION} /rcon-cli /usr/local/bin/rcon-cli
+COPY --from=build /scripts/mc-health-check /usr/local/bin/
 
 # Add server jar (this will typically change the most, so we keep it near the end)
 ADD "${DOWNLOAD_URL}" /opt/minecraft/paperspigot.jar
+
+# Configure health check
+HEALTHCHECK --interval=60s --timeout=15s --start-period=120s --retries=3 \
+  CMD mc-health-check || exit 1
 
 # Switch to non-root user
 USER 9001:9001
