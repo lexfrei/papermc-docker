@@ -2,9 +2,9 @@ FROM eclipse-temurin:21.0.6_7-jre-alpine AS build
 
 # Download and prepare RCON health check script
 RUN mkdir -p /scripts && \
-    echo '#!/bin/sh' > /scripts/mc-health-check && \
-    echo 'rcon-cli ping > /dev/null 2>&1' >> /scripts/mc-health-check && \
-    chmod +x /scripts/mc-health-check
+  echo '#!/bin/sh' > /scripts/mc-health-check && \
+  echo 'rcon-cli ping > /dev/null 2>&1' >> /scripts/mc-health-check && \
+  chmod +x /scripts/mc-health-check
 
 # Final stage
 FROM eclipse-temurin:21.0.6_7-jre
@@ -15,7 +15,6 @@ VOLUME /data
 WORKDIR /data
 
 # Arguments
-ARG RCON_VERSION=latest
 ARG DOWNLOAD_URL
 
 # Set up environment variables
@@ -33,7 +32,7 @@ RUN apt-get update && \
   chown -R 9001:9001 /data /opt/minecraft
 
 # Copy RCON and health check script
-COPY --from=docker.io/itzg/rcon-cli:${RCON_VERSION} /rcon-cli /usr/local/bin/rcon-cli
+COPY --from=docker.io/itzg/rcon-cli:latest /rcon-cli /usr/local/bin/rcon-cli
 COPY --from=build /scripts/mc-health-check /usr/local/bin/
 
 # Add server jar (this will typically change the most, so we keep it near the end)
