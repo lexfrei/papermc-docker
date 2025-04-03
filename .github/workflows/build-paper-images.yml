@@ -66,8 +66,9 @@ jobs:
             type=raw,value=${{ matrix.version }}-${{ matrix.build }}
             type=raw,value=${{ matrix.version }}
             ${{ matrix.version == needs.prepare.outputs.latest && 'type=raw,value=latest' || '' }}
-
-      - name: Build
+      
+      # First build for amd64 only and export to Docker (for Trivy scanning)
+      - name: Build for scanning
         uses: docker/build-push-action@v6
         id: build
         with:
@@ -95,6 +96,7 @@ jobs:
         with:
           sarif_file: 'trivy-results.sarif'
           
+      # Build multi-platform and push, using the cache from previous build
       - name: Build and push all platforms
         uses: docker/build-push-action@v6
         with:
