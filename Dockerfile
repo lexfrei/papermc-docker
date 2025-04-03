@@ -29,7 +29,7 @@ COPY scripts/mc-health-check /usr/local/bin/
 RUN chmod +x /usr/local/bin/mc-health-check
 
 # Add server jar (this will typically change the most, so we keep it near the end)
-ADD "${DOWNLOAD_URL}" /opt/minecraft/paperspigot.jar
+ADD --chown=9001:9001 "${DOWNLOAD_URL}" /opt/minecraft/paperspigot.jar
 
 # Configure health check
 HEALTHCHECK --interval=60s --timeout=30s --start-period=180s --retries=3 \
