@@ -24,8 +24,8 @@ RUN apt-get update && \
   chown -R 9001:9001 /data /opt/minecraft
 
 # Copy RCON and health check script
-COPY --from=docker.io/itzg/rcon-cli:latest /rcon-cli /usr/local/bin/rcon-cli
-COPY scripts/mc-health-check /usr/local/bin/
+COPY --chown=9001:9001 --from=docker.io/itzg/rcon-cli:latest /rcon-cli /usr/local/bin/rcon-cli
+COPY --chown=9001:9001  scripts/mc-health-check /usr/local/bin/
 RUN chmod +x /usr/local/bin/mc-health-check
 
 # Add server jar (this will typically change the most, so we keep it near the end)
