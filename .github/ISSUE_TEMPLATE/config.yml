@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: PaperMC Docker Discussions
+    url: https://github.com/lexfrei/papermc-docker/discussions
+    about: Please ask and answer questions or start discussions here
+  - name: PaperMC Documentation
+    url: https://docs.papermc.io/
+    about: Official PaperMC documentation for server related questions

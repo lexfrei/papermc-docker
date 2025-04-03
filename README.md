@@ -2,6 +2,8 @@
 
 [![Build Paper Docker Images](https://github.com/lexfrei/papermc-docker/actions/workflows/build-paper-images.yml/badge.svg)](https://github.com/lexfrei/papermc-docker/actions/workflows/build-paper-images.yml)
 [![Docker Pulls](https://img.shields.io/docker/pulls/lexfrei/papermc.svg)](https://hub.docker.com/r/lexfrei/papermc)
+[![License](https://img.shields.io/github/license/lexfrei/papermc-docker)](https://github.com/lexfrei/papermc-docker/blob/master/LICENSE)
+[![Docker Image Size](https://img.shields.io/docker/image-size/lexfrei/papermc/latest)](https://hub.docker.com/r/lexfrei/papermc)
 
 A lightweight, optimized Docker image for running PaperMC Minecraft servers.
 
@@ -13,13 +15,23 @@ A lightweight, optimized Docker image for running PaperMC Minecraft servers.
 - Built-in RCON support with health checks
 - Plugin installation support
 - Multi-architecture support (amd64, arm64)
-- Minimal image size with multi-stage builds
+- Minimal image size with optimized configuration
 
 ## Tags
 
 - `latest` - Latest PaperMC version
 - `<version>` - Specific Minecraft version (e.g. `1.21.4`)
 - `<version>-<build>` - Specific Minecraft version and Paper build (e.g. `1.21.4-222`)
+
+## Supported Versions
+
+This image automatically builds the latest three PaperMC versions daily. Currently supported:
+
+- Minecraft 1.21.x - Latest and recommended
+- Minecraft 1.20.x
+- Minecraft 1.19.x
+
+Older versions may be available as tags but are not actively maintained.
 
 ## Usage
 
@@ -210,6 +222,10 @@ When upgrading Minecraft versions:
 ```bash
 docker build -t lexfrei/papermc:latest .
 ```
+
+## Contributing
+
+Contributions are welcome! Please see the [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines.
 
 ## License
 

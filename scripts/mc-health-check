@@ -1,0 +1,2 @@
+#!/bin/sh
+rcon-cli ping > /dev/null 2>&1
