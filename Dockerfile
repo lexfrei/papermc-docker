@@ -20,7 +20,7 @@ RUN apt-get update && \
   # Install webp for Dynmap plugin image processing and optimization
   apt-get install --no-install-recommends -y webp && \
   rm -rf /var/lib/apt/lists/* && \
-  mkdir -p /data /opt/minecraft /data/plugins/update && \
+  mkdir -p /data /opt/minecraft && \
   chown -R 9001:9001 /data /opt/minecraft
 
 # Copy RCON and health check script
@@ -39,4 +39,4 @@ HEALTHCHECK --interval=60s --timeout=30s --start-period=180s --retries=3 \
 USER 9001:9001
 
 # Start server
-ENTRYPOINT ["sh", "-c", "java ${JAVAFLAGS} -jar /opt/minecraft/paperspigot.jar ${PAPERMC_FLAGS} nogui"]
+ENTRYPOINT ["sh", "-c", "exec java ${JAVAFLAGS} -jar /opt/minecraft/paperspigot.jar ${PAPERMC_FLAGS} nogui"]
