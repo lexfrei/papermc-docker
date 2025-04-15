@@ -4,6 +4,7 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/lexfrei/papermc.svg)](https://hub.docker.com/r/lexfrei/papermc)
 [![License](https://img.shields.io/github/license/lexfrei/papermc-docker)](https://github.com/lexfrei/papermc-docker/blob/master/LICENSE)
 [![Docker Image Size](https://img.shields.io/docker/image-size/lexfrei/papermc/latest)](https://hub.docker.com/r/lexfrei/papermc)
+[![Wiki](https://img.shields.io/badge/wiki-documentation-informational)](https://github.com/lexfrei/papermc-docker/wiki)
 
 A lightweight, optimized Docker image for running PaperMC Minecraft servers.
 
@@ -28,27 +29,34 @@ This server is compatible with:
 
 ## Tags
 
-- `latest` - Latest PaperMC version
-- `<version>` - Specific Minecraft version (e.g. `1.21.4`)
-- `<version>-<build>` - Specific Minecraft version and Paper build (e.g. `1.21.4-222`)
+- `latest` - Points to the newest Minecraft version
+- `<version>` - Specific Minecraft version (e.g., `1.21.5`), which points to the same image as its corresponding build tag
+- `<version>-<build>` - Specific Minecraft version with PaperMC build number (e.g., `1.21.5-20`)
+
+Example of tag relationships:
+- `latest` → `<newest-version>` → `<newest-version>-<build>` (all point to the same image)
+- `<older-version>` → `<older-version>-<build>` (both point to the same image)
+
+To find the latest available tags, check [Docker Hub](https://hub.docker.com/r/lexfrei/papermc/tags).
 
 ## Supported Versions
 
-This image automatically builds the latest three PaperMC versions daily. Currently supported:
+This image automatically builds the latest three minor versions within the current major version daily. For example:
 
-- Minecraft 1.21.x - Latest and recommended
-- Minecraft 1.20.x
-- Minecraft 1.19.x
+- Latest minor version (e.g., 1.21.5)
+- Second most recent minor version (e.g., 1.21.4)
+- Third most recent minor version (e.g., 1.21.3)
 
-Older versions may be available as tags but are not actively maintained.
+Only the three most recent minor versions are maintained, not all versions within a major release range. As new minor versions are released, older ones are removed from active maintenance.
 
 ### Version Update Policy
 
-- **Daily builds**: The container is rebuilt daily to incorporate the latest PaperMC builds for supported versions
-- **Minor version updates**: When PaperMC releases a minor version update (e.g., 1.21.3 → 1.21.4), the container tags are updated automatically
-- **Major version updates**: When a new major version is released (e.g., 1.21 → 1.22), it replaces the oldest supported version after being tested for stability
+- **Daily builds**: The container is rebuilt daily with the latest PaperMC builds for each supported minor version
+- **Minor version tracking**: The three most recent minor versions within the current major version are maintained
+- **Build tracking**: For each minor version, the latest PaperMC build is tracked and updated
+- **Tag synchronization**: Version tags (e.g., `<version>`) always point to their corresponding build-specific tags (e.g., `<version>-<build>`)
 
-It's recommended to use specific version tags in production environments (e.g., `1.21.4-222`) and the `latest` tag for testing. This gives you control over when to upgrade your server.
+> **Recommendation**: Use `latest` tag for testing, but switch to a specific version-build tag (e.g., `<version>-<build>`) for production environments to ensure stability.
 
 ## Usage
 
@@ -88,6 +96,8 @@ docker run -d \
   lexfrei/papermc:latest
 ```
 
+> **Note**: For production environments, replace `latest` with a specific version-build tag after testing.
+
 ### Docker Compose
 
 ```yaml
@@ -108,6 +118,8 @@ services:
           memory: 4G
     restart: unless-stopped
 ```
+
+> **Note**: For production deployments, use a specific version-build tag instead of `latest`.
 
 ### Kubernetes
 
