@@ -16,9 +16,11 @@ ENV PAPERMC_FLAGS="--nojline" \
   JAVAFLAGS="-XX:+AlwaysPreTouch -XX:+DisableExplicitGC -XX:+ParallelRefProcEnabled -XX:+PerfDisableSharedMem -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1HeapRegionSize=8M -XX:G1HeapWastePercent=5 -XX:G1MaxNewSizePercent=40 -XX:G1MixedGCCountTarget=4 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1NewSizePercent=30 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:G1ReservePercent=20 -XX:InitiatingHeapOccupancyPercent=15 -XX:MaxGCPauseMillis=200 -XX:MaxTenuringThreshold=1 -XX:SurvivorRatio=32 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true -Dcom.mojang.eula.agree=true"
 
 # Install dependencies and set up user in a single layer
+# Hadolint is disabled here because i'm lazy and don't want to pin versions
+# hadolint ignore=DL3008
 RUN apt-get update && \
   # Install webp for Dynmap plugin image processing and optimization
-  apt-get install --no-install-recommends -y webp && \
+  apt-get install --no-install-recommends --assume-yes webp && \
   rm -rf /var/lib/apt/lists/* && \
   mkdir -p /data /opt/minecraft && \
   chown -R 9001:9001 /data /opt/minecraft
@@ -29,6 +31,8 @@ COPY --chown=9001:9001  scripts/mc-health-check /usr/local/bin/
 RUN chmod +x /usr/local/bin/mc-health-check
 
 # Add server jar (this will typically change the most, so we keep it near the end)
+# Hadolint is disabled here because the URL is passed as a build argument
+# hadolint ignore=DL3020
 ADD --chown=9001:9001 "${DOWNLOAD_URL}" /opt/minecraft/paperspigot.jar
 
 # Configure health check

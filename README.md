@@ -108,6 +108,7 @@ With this setup, you can add plugins by placing them in `/path/to/data/plugins`.
 Create a `server.properties` file in your data directory to customize your server settings. If no file exists, a default one will be created on first run.
 
 Example configuration:
+
 ```properties
 server-port=25565
 motd=My PaperMC Server
@@ -183,6 +184,7 @@ docker logs minecraft-server
 ```
 
 Common issues include:
+
 - Incompatible plugins
 - Incorrect server.properties configuration
 - Insufficient disk space
