@@ -12,7 +12,7 @@ A lightweight, optimized Docker image for running PaperMC Minecraft servers.
 - Based on Eclipse Temurin 21 JRE
 - Automatically updated daily with the latest Paper builds
 - Optimized with [Aikar's flags](https://docs.papermc.io/paper/aikars-flags)
-- Built-in RCON support with health checks
+- Simple socket-based health checks
 - Plugin installation support
 - Multi-architecture support (amd64, arm64)
 - Minimal image size with optimized configuration
@@ -117,6 +117,34 @@ view-distance=10
 spawn-protection=0
 ```
 
+### Using RCON (Optional)
+
+If you need to use RCON for server management, you have two options:
+
+1. Use an external RCON client or sidecar container
+2. Connect to the server using an RCON client of your choice
+
+To enable RCON, add these settings to your `server.properties`:
+
+```properties
+enable-rcon=true
+rcon.password=your_secure_password
+rcon.port=25575
+```
+
+And expose the RCON port when running your container:
+
+```bash
+docker run -d \
+  --name minecraft-server \
+  -p 25565:25565/tcp \
+  -p 25565:25565/udp \
+  -p 25575:25575/tcp \  # Expose RCON port
+  --memory 4G \
+  -v /path/to/data:/data \
+  lexfrei/papermc:latest
+```
+
 ### DynMap Configuration
 
 If you're using DynMap, make sure to expose port 8123:
@@ -191,11 +219,11 @@ Common issues include:
 
 ### Health Check Failures
 
-This image includes a health check using RCON. If the health check fails:
+This image includes a socket-based health check. If the health check fails:
 
 1. Ensure the server is running properly
-2. Check if RCON is enabled (default is enabled)
-3. Verify network connectivity inside the container
+2. Verify the Minecraft server port (25565) is accessible from within the container
+3. Check server logs for any startup issues
 
 ## Migration Guide
 
@@ -237,4 +265,3 @@ This project is licensed under the BSD License - see the LICENSE file for detail
 
 - [PaperMC](https://papermc.io/) - The high performance Minecraft server
 - [Aikar's flags](https://docs.papermc.io/paper/aikars-flags) - Optimized JVM flags for Minecraft servers
-- [itzg/rcon-cli](https://github.com/itzg/docker-rcon-cli) - RCON client for Minecraft

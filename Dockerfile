@@ -20,14 +20,13 @@ ENV PAPERMC_FLAGS="--nojline" \
 # hadolint ignore=DL3008
 RUN apt-get update && \
   # Install webp for Dynmap plugin image processing and optimization
-  apt-get install --no-install-recommends --assume-yes webp && \
+  apt-get install --no-install-recommends --assume-yes webp netcat-openbsd && \
   rm -rf /var/lib/apt/lists/* && \
   mkdir -p /data /opt/minecraft && \
   chown -R 9001:9001 /data /opt/minecraft
 
-# Copy RCON and health check script
-COPY --chown=9001:9001 --from=docker.io/itzg/rcon-cli:latest /rcon-cli /usr/local/bin/rcon-cli
-COPY --chown=9001:9001  scripts/mc-health-check /usr/local/bin/
+# Copy health check script
+COPY --chown=9001:9001 scripts/mc-health-check /usr/local/bin/
 RUN chmod +x /usr/local/bin/mc-health-check
 
 # Add server jar (this will typically change the most, so we keep it near the end)
