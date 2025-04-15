@@ -10,6 +10,7 @@ A lightweight, optimized Docker image for running PaperMC Minecraft servers.
 ## Compatibility
 
 This server is compatible with:
+
 - **Minecraft Java Edition** clients only (not Bedrock Edition)
 - PaperMC plugins and Spigot/Bukkit plugins
 - Standard Minecraft protocols and tools
