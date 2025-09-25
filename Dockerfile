@@ -1,5 +1,5 @@
 # Base image
-FROM eclipse-temurin:21.0.8_9-jre
+FROM eclipse-temurin:25-jre
 
 # Configure environment
 EXPOSE 25565/tcp 25565/udp 8123/tcp
