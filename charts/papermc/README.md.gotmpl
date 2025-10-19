@@ -77,27 +77,31 @@ resources:
 Enable additional port for DynMap web interface:
 
 ```yaml
-service:
-  extraPorts:
+ports:
+  extra:
     - name: dynmap
       port: 8123
       protocol: TCP
 
 ingress:
   enabled: true
-  className: nginx
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-  hosts:
-    - host: map.example.com
-      paths:
-        - path: /
-          pathType: Prefix
-          servicePort: dynmap
-  tls:
-    - secretName: map-tls
-      hosts:
-        - map.example.com
+  spec:
+    ingressClassName: nginx
+    tls:
+      - secretName: map-tls
+        hosts:
+          - map.example.com
+    rules:
+      - host: map.example.com
+        http:
+          paths:
+            - path: /
+              pathType: Prefix
+              backend:
+                service:
+                  name: papermc  # Will be auto-replaced with release name
+                  port:
+                    name: dynmap
 ```
 
 ### Server with Multiple Plugins
@@ -105,8 +109,8 @@ ingress:
 Configure multiple plugin web interfaces:
 
 ```yaml
-service:
-  extraPorts:
+ports:
+  extra:
     - name: dynmap
       port: 8123
       protocol: TCP
@@ -136,21 +140,29 @@ affinity:
 Use Gateway API instead of Ingress:
 
 ```yaml
-service:
-  extraPorts:
+ports:
+  extra:
     - name: dynmap
       port: 8123
       protocol: TCP
 
 httpRoute:
   enabled: true
-  parentRefs:
-    - name: cilium-gateway
-      namespace: kube-system
-      sectionName: https
-  hostnames:
-    - map.example.com
-  backendPort: 8123
+  spec:
+    parentRefs:
+      - name: cilium-gateway
+        namespace: kube-system
+        sectionName: https
+    hostnames:
+      - map.example.com
+    rules:
+      - matches:
+          - path:
+              type: PathPrefix
+              value: /
+        backendRefs:
+          - name: papermc  # Will be auto-replaced with release name
+            port: 8123
 ```
 
 ### LoadBalancer with Fixed IP

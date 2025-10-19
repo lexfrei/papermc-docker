@@ -141,17 +141,19 @@ The Helm chart is located in `charts/papermc/` with the following structure:
 - **values.schema.json**: JSON schema for values validation
 - **templates/**: Kubernetes resource templates
   - StatefulSet with dynamic port configuration
-  - Service with support for plugin ports (extraPorts)
-  - Optional Ingress and HTTPRoute (Gateway API)
-  - ServiceAccount, NOTES.txt
+  - Service with synchronized ports from `ports` configuration
+  - Optional Ingress with custom spec passthrough
+  - Optional HTTPRoute (Gateway API) with custom spec passthrough
+  - NOTES.txt
 - **tests/**: helm-unittest test suite
 - **README.md.gotmpl**: helm-docs template for documentation
 - **.markdownlint.yaml**: Linting rules for generated README
 
 ### Chart Features
-- **Flexible service ports**: Support for multiple plugin ports via `extraPorts`
-- **Optional Ingress**: Standard Kubernetes Ingress for web interfaces
-- **Optional HTTPRoute**: Gateway API support for advanced routing
+- **Flexible port configuration**: Centralized `ports` section with `minecraft.tcp/udp` and `extra` array
+- **No ServiceAccount**: Removed as not needed for Minecraft server
+- **Custom spec Ingress**: Full passthrough of Ingress spec for maximum flexibility
+- **Custom spec HTTPRoute**: Full passthrough of HTTPRoute spec for maximum flexibility
 - **Parametrized affinity**: Configurable node affinity/tolerations
 - **Image versioning**: Uses Chart.appVersion by default, overridable via values
 - **No cosign signing**: Chart is published without cryptographic signatures
@@ -178,15 +180,16 @@ helm template test-release charts/papermc
 
 # Template with extra ports (e.g., DynMap)
 helm template test-release charts/papermc \
-  --set service.extraPorts[0].name=dynmap \
-  --set service.extraPorts[0].port=8123 \
-  --set service.extraPorts[0].protocol=TCP
+  --set ports.extra[0].name=dynmap \
+  --set ports.extra[0].port=8123 \
+  --set ports.extra[0].protocol=TCP
 
-# Template with Ingress
+# Template with custom Ingress spec
 helm template test-release charts/papermc \
-  --set ingress.enabled=true
+  --set ingress.enabled=true \
+  --set ingress.spec.ingressClassName=nginx
 
-# Template with HTTPRoute
+# Template with custom HTTPRoute spec
 helm template test-release charts/papermc \
   --set httpRoute.enabled=true
 ```

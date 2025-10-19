@@ -2,7 +2,6 @@ suite: test papermc chart
 templates:
   - statefulset.yaml
   - service.yaml
-  - serviceaccount.yaml
   - ingress.yaml
   - httproute.yaml
 tests:
@@ -14,9 +13,6 @@ tests:
       - isKind:
           of: Service
         template: service.yaml
-      - isKind:
-          of: ServiceAccount
-        template: serviceaccount.yaml
 
   - it: should set correct image with appVersion by default
     template: statefulset.yaml
@@ -55,7 +51,7 @@ tests:
   - it: should add extra ports when specified
     template: service.yaml
     set:
-      service.extraPorts:
+      ports.extra:
         - name: dynmap
           port: 8123
           protocol: TCP
@@ -88,6 +84,8 @@ tests:
     template: ingress.yaml
     set:
       ingress.enabled: true
+      ingress.spec:
+        ingressClassName: nginx
     asserts:
       - isKind:
           of: Ingress
@@ -126,7 +124,7 @@ tests:
   - it: should add extra ports to statefulset containers
     template: statefulset.yaml
     set:
-      service.extraPorts:
+      ports.extra:
         - name: dynmap
           port: 8123
           protocol: TCP

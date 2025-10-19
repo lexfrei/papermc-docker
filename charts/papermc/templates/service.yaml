@@ -11,15 +11,15 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
-    - port: {{ .Values.service.minecraftTCPPort }}
+    - port: {{ .Values.ports.minecraft.tcp }}
       targetPort: minecraft-tcp
       protocol: TCP
       name: minecraft-tcp
-    - port: {{ .Values.service.minecraftUDPPort }}
+    - port: {{ .Values.ports.minecraft.udp }}
       targetPort: minecraft-udp
       protocol: UDP
       name: minecraft-udp
-    {{- range .Values.service.extraPorts }}
+    {{- range .Values.ports.extra }}
     - port: {{ .port }}
       targetPort: {{ .name }}
       protocol: {{ .protocol }}

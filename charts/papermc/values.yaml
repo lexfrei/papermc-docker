@@ -11,6 +11,25 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+# -- Port configuration
+ports:
+  # -- Minecraft server ports (TCP and UDP)
+  minecraft:
+    tcp: 25565
+    udp: 25565
+
+  # -- Additional ports for plugins (e.g., DynMap, BlueMap, etc.)
+  # Each port will be exposed in both the Pod and Service
+  # @default -- `[]`
+  extra: []
+  # Examples:
+  # - name: dynmap
+  #   port: 8123
+  #   protocol: TCP
+  # - name: bluemap
+  #   port: 8100
+  #   protocol: TCP
+
 # -- Service configuration
 service:
   # -- Service type
@@ -20,54 +39,57 @@ service:
     # io.cilium/lb-ipam-ips: "172.16.100.253"
     # metallb.io/address-pool: minecraft-pool
 
-  # -- Minecraft TCP port
-  minecraftTCPPort: 25565
-  # -- Minecraft UDP port
-  minecraftUDPPort: 25565
-
-  # -- Additional ports for plugins (e.g., DynMap, BlueMap, etc.)
-  # @default -- `[]`
-  extraPorts: []
-  # Examples:
-  # - name: dynmap
-  #   port: 8123
-  #   protocol: TCP
-  # - name: bluemap
-  #   port: 8100
-  #   protocol: TCP
-
 # -- Ingress configuration for web interfaces (e.g., DynMap)
+# Provides full control over the Ingress spec for maximum flexibility
 ingress:
   enabled: false
-  className: "nginx"
-  annotations: {}
-    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    # kubernetes.io/ingress.class: nginx
-  hosts:
-    - host: map.example.com
-      paths:
-        - path: /
-          pathType: Prefix
-          # -- Backend service port name (e.g., dynmap)
-          servicePort: dynmap
-  tls: []
-  #  - secretName: map-tls
-  #    hosts:
-  #      - map.example.com
+  # -- Full Ingress spec (excluding metadata)
+  # The service name will be auto-injected as the chart fullname
+  # @default -- `{}`
+  spec: {}
+  # Example configuration:
+  # spec:
+  #   ingressClassName: nginx
+  #   tls:
+  #     - secretName: map-tls
+  #       hosts:
+  #         - map.example.com
+  #   rules:
+  #     - host: map.example.com
+  #       http:
+  #         paths:
+  #           - path: /
+  #             pathType: Prefix
+  #             backend:
+  #               service:
+  #                 name: papermc  # Will be auto-replaced with chart fullname
+  #                 port:
+  #                   name: dynmap
 
 # -- HTTPRoute configuration (Gateway API) for web interfaces
+# Provides full control over the HTTPRoute spec for maximum flexibility
 httpRoute:
   enabled: false
-  # -- Parent gateway reference
-  parentRefs:
-    - name: cilium-gateway
-      namespace: kube-system
-      sectionName: https
-  # -- Hostnames for the HTTPRoute
-  hostnames:
-    - map.example.com
-  # -- Backend service port for the HTTPRoute
-  backendPort: 8123
+  # -- Full HTTPRoute spec (excluding metadata)
+  # The service name will be auto-injected as the chart fullname
+  # @default -- `{}`
+  spec: {}
+  # Example configuration:
+  # spec:
+  #   parentRefs:
+  #     - name: cilium-gateway
+  #       namespace: kube-system
+  #       sectionName: https
+  #   hostnames:
+  #     - map.example.com
+  #   rules:
+  #     - matches:
+  #         - path:
+  #             type: PathPrefix
+  #             value: /
+  #       backendRefs:
+  #         - name: papermc  # Will be auto-replaced with chart fullname
+  #           port: 8123
 
 # -- Persistence configuration
 persistence:
@@ -142,15 +164,6 @@ securityContext: {}
   # readOnlyRootFilesystem: true
   # runAsNonRoot: true
   # runAsUser: 1000
-
-# -- Service account configuration
-serviceAccount:
-  # -- Specifies whether a service account should be created
-  create: true
-  # -- Annotations to add to the service account
-  annotations: {}
-  # -- The name of the service account to use
-  name: ""
 
 # -- Update strategy
 updateStrategy:

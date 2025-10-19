@@ -6,18 +6,5 @@ metadata:
   labels:
     {{- include "papermc.labels" . | nindent 4 }}
 spec:
-  parentRefs:
-    {{- toYaml .Values.httpRoute.parentRefs | nindent 4 }}
-  hostnames:
-    {{- range .Values.httpRoute.hostnames }}
-    - {{ . }}
-    {{- end }}
-  rules:
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /
-      backendRefs:
-        - name: {{ include "papermc.fullname" . }}
-          port: {{ .Values.httpRoute.backendPort }}
+  {{- toYaml .Values.httpRoute.spec | nindent 2 }}
 {{- end }}
