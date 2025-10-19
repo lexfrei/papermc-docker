@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Docker containerization project for PaperMC Minecraft servers. The repository builds optimized, multi-architecture Docker images that are automatically updated daily with the latest PaperMC builds. The project uses GitHub Actions for CI/CD and publishes images to Docker Hub.
+This is a Docker containerization and Kubernetes Helm chart project for PaperMC Minecraft servers. The repository builds optimized, multi-architecture Docker images that are automatically updated daily with the latest PaperMC builds, and provides a Helm chart for Kubernetes deployments. The project uses GitHub Actions for CI/CD and publishes images to Docker Hub and charts to GitHub Container Registry (GHCR).
 
 ## Core Architecture
 
@@ -131,3 +131,181 @@ Update both the `EXPOSE` directive in Dockerfile and the examples in documentati
 
 ### Health Check Modifications
 Edit `scripts/mc-health-check` for alternative health monitoring approaches.
+
+## Helm Chart Development
+
+### Chart Structure
+The Helm chart is located in `charts/papermc/` with the following structure:
+- **Chart.yaml**: Chart metadata with Artifact Hub annotations
+- **values.yaml**: Default configuration with flexible options
+- **values.schema.json**: JSON schema for values validation
+- **templates/**: Kubernetes resource templates
+  - StatefulSet with dynamic port configuration
+  - Service with support for plugin ports (extraPorts)
+  - Optional Ingress and HTTPRoute (Gateway API)
+  - ServiceAccount, NOTES.txt
+- **tests/**: helm-unittest test suite
+- **README.md.gotmpl**: helm-docs template for documentation
+- **.markdownlint.yaml**: Linting rules for generated README
+
+### Chart Features
+- **Flexible service ports**: Support for multiple plugin ports via `extraPorts`
+- **Optional Ingress**: Standard Kubernetes Ingress for web interfaces
+- **Optional HTTPRoute**: Gateway API support for advanced routing
+- **Parametrized affinity**: Configurable node affinity/tolerations
+- **Image versioning**: Uses Chart.appVersion by default, overridable via values
+- **No cosign signing**: Chart is published without cryptographic signatures
+- **Short OCI path**: Published to `oci://ghcr.io/lexfrei/papermc` (not `/charts/papermc`)
+
+### Development Commands
+
+#### Testing the Chart
+```bash
+# Lint the chart
+helm lint charts/papermc
+
+# Run unit tests
+helm unittest charts/papermc --color
+
+# Validate JSON schema
+check-jsonschema --schemafile charts/papermc/values.schema.json charts/papermc/values.yaml
+
+# Run Artifact Hub lint
+ah lint --kind helm --path charts/papermc
+
+# Template the chart (dry run)
+helm template test-release charts/papermc
+
+# Template with extra ports (e.g., DynMap)
+helm template test-release charts/papermc \
+  --set service.extraPorts[0].name=dynmap \
+  --set service.extraPorts[0].port=8123 \
+  --set service.extraPorts[0].protocol=TCP
+
+# Template with Ingress
+helm template test-release charts/papermc \
+  --set ingress.enabled=true
+
+# Template with HTTPRoute
+helm template test-release charts/papermc \
+  --set httpRoute.enabled=true
+```
+
+#### Documentation Generation
+```bash
+# Generate README.md from template
+helm-docs charts/papermc
+
+# Lint generated README
+markdownlint charts/papermc/README.md --config charts/papermc/.markdownlint.yaml
+```
+
+#### Local Chart Installation
+```bash
+# Install from local directory
+helm install papermc charts/papermc
+
+# Install with custom values
+helm install papermc charts/papermc --values my-values.yaml
+
+# Upgrade existing installation
+helm upgrade papermc charts/papermc
+
+# Uninstall
+helm uninstall papermc
+```
+
+### Chart Workflows
+
+#### publish-chart.yaml
+Publishes chart to GHCR when changes are pushed to `charts/` directory:
+1. **detect-changes**: Checks if chart version exists in releases
+2. **publish**: Validates, packages, and publishes chart
+   - Helm lint
+   - helm-unittest
+   - JSON schema validation
+   - Artifact Hub lint
+   - Package and push to `oci://ghcr.io/lexfrei/papermc`
+   - Publish Artifact Hub metadata
+   - Create GitHub Release
+
+**Important**: Does NOT use cosign for signing. Chart is published without cryptographic signatures.
+
+#### test-chart.yaml
+Runs on all PRs and pushes:
+- Helm lint
+- helm-unittest
+- chart-testing (ct lint)
+- Artifact Hub lint
+- JSON schema validation
+- helm-docs freshness check
+- markdownlint for README.md
+- Template rendering tests with various configurations
+
+### Chart Versioning
+
+Chart follows semantic versioning:
+- **Chart version**: Independent versioning in `Chart.yaml` (e.g., 0.0.1)
+- **App version**: PaperMC version from Chart.yaml (e.g., 1.21.10)
+- **Image tag**: Defaults to appVersion, overridable in values.yaml
+
+To release a new chart version:
+1. Update version in `charts/papermc/Chart.yaml`
+2. Update changelog in annotations
+3. Commit and push changes
+4. Workflow will automatically publish to GHCR and create GitHub release
+
+### Required Tools for Chart Development
+
+```bash
+# Helm
+brew install helm
+
+# helm-docs (for README generation)
+brew install norwoodj/tap/helm-docs
+
+# helm-unittest (for testing)
+helm plugin install https://github.com/helm-unittest/helm-unittest.git
+
+# JSON schema validator
+pip install check-jsonschema
+
+# Artifact Hub CLI
+# Download from https://github.com/artifacthub/hub/releases
+
+# markdownlint
+npm install --global markdownlint-cli
+
+# chart-testing (optional, for advanced testing)
+brew install chart-testing
+```
+
+### Artifact Hub Integration
+
+Chart is published to Artifact Hub:
+- **Repository ID**: 900e6e4b-a006-498a-8d2c-4e95148fb363
+- **Metadata file**: `charts/papermc/artifacthub-repo.yml`
+- **Published separately**: via ORAS to special `:artifacthub.io` tag
+- **No signing verification**: Chart is NOT signed with cosign
+
+### Common Chart Development Tasks
+
+#### Adding New Configuration Options
+1. Add option to `charts/papermc/values.yaml` with comments
+2. Update `charts/papermc/values.schema.json` with validation rules
+3. Update relevant template in `charts/papermc/templates/`
+4. Add test case in `charts/papermc/tests/chart_test.yaml`
+5. Document in `charts/papermc/README.md.gotmpl`
+6. Run `helm-docs charts/papermc` to regenerate README
+
+#### Adding New Template
+1. Create new template file in `charts/papermc/templates/`
+2. Use helpers from `_helpers.tpl` for labels and names
+3. Add conditional logic if the resource is optional
+4. Add test case in `charts/papermc/tests/chart_test.yaml`
+5. Update NOTES.txt if user needs to know about the new resource
+
+#### Updating Chart Version
+1. Update `version` in `charts/papermc/Chart.yaml`
+2. Update `annotations."artifacthub.io/changes"` with changelog
+3. Commit and push - workflow handles the rest
