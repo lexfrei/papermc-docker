@@ -16,6 +16,8 @@ Fixes #[issue number]
 ## How Has This Been Tested?
 <!-- Describe the tests you ran to verify your changes -->
 - [ ] Built and ran the Docker image locally
+- [ ] Tested Helm chart (helm lint, helm template, helm install)
+- [ ] Ran helm-unittest tests
 - [ ] Tested with Minecraft client
 - [ ] Verified functionality of specific changes
 - [ ] Other: <!-- Please describe -->
@@ -31,10 +33,14 @@ Fixes #[issue number]
 - [ ] Documentation update
 - [ ] Performance improvement
 - [ ] Code cleanup or refactoring
+- [ ] Docker image changes
+- [ ] Helm chart changes
 
 ## Checklist
 <!-- Go over all the following points, and put an `x` in all the boxes that apply. -->
-- [ ] My code follows the code style of this project (check with `docker build`)
+- [ ] My code follows the code style of this project (check with `docker build` or `helm lint`)
+- [ ] For Helm chart changes: I have run `helm-docs` to regenerate README.md
+- [ ] For Helm chart changes: I have updated Chart.yaml version and changelog annotations
 - [ ] My changes require a change to the documentation
 - [ ] I have updated the documentation accordingly
 - [ ] I have checked that my changes do not break existing functionality
