@@ -46,10 +46,10 @@ jobs:
       - name: Get current chart version
         id: current
         run: |
-          CURRENT_VERSION=$(yq eval '.version' charts/papermc/Chart.yaml | tr -d '"')
-          CURRENT_APP_VERSION=$(yq eval '.appVersion' charts/papermc/Chart.yaml | tr -d '"')
-          echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-          echo "app_version=$CURRENT_APP_VERSION" >> $GITHUB_OUTPUT
+          CURRENT_VERSION=$(yq eval '.version' charts/papermc/Chart.yaml | tr --delete '"')
+          CURRENT_APP_VERSION=$(yq eval '.appVersion' charts/papermc/Chart.yaml | tr --delete '"')
+          echo "version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
+          echo "app_version=$CURRENT_APP_VERSION" >> "$GITHUB_OUTPUT"
           echo "Current chart version: $CURRENT_VERSION"
           echo "Current app version: $CURRENT_APP_VERSION"
 
@@ -57,11 +57,11 @@ jobs:
         id: new
         run: |
           CURRENT="${{ steps.current.outputs.version }}"
-          MAJOR=$(echo $CURRENT | cut -d. -f1)
-          MINOR=$(echo $CURRENT | cut -d. -f2)
+          MAJOR=$(echo "$CURRENT" | cut --delimiter=. --fields=1)
+          MINOR=$(echo "$CURRENT" | cut --delimiter=. --fields=2)
           NEW_MINOR=$((MINOR + 1))
           NEW_VERSION="${MAJOR}.${NEW_MINOR}.0"
-          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
           echo "New chart version: $NEW_VERSION"
 
       - name: Update Chart.yaml
@@ -69,27 +69,16 @@ jobs:
           CHART_FILE="charts/papermc/Chart.yaml"
 
           # Update appVersion
-          yq eval -i ".appVersion = \"${{ inputs.version }}\"" $CHART_FILE
+          yq eval -i ".appVersion = \"${{ inputs.version }}\"" "$CHART_FILE"
 
           # Update version
-          yq eval -i ".version = \"${{ steps.new.outputs.version }}\"" $CHART_FILE
+          yq eval -i ".version = \"${{ steps.new.outputs.version }}\"" "$CHART_FILE"
 
           # Update changelog - prepend new entry
-          NEW_ENTRY="- kind: changed
-  description: Update PaperMC to version ${{ inputs.version }}"
-
-          # Get current changes
-          CURRENT_CHANGES=$(yq eval '.annotations."artifacthub.io/changes"' $CHART_FILE)
-
-          # Combine: new entry first, then existing
-          COMBINED="${NEW_ENTRY}
-${CURRENT_CHANGES}"
-
-          # Write back
-          yq eval -i ".annotations.\"artifacthub.io/changes\" = \"${COMBINED}\"" $CHART_FILE
+          yq eval -i ".annotations.\"artifacthub.io/changes\" = \"- kind: changed\n  description: Update PaperMC to version ${{ inputs.version }}\n\" + .annotations.\"artifacthub.io/changes\"" "$CHART_FILE"
 
           echo "Chart.yaml updated:"
-          cat $CHART_FILE
+          cat "$CHART_FILE"
 
       - name: Regenerate README
         run: |
