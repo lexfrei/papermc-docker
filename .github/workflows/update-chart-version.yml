@@ -1,0 +1,149 @@
+name: Update Chart Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'New PaperMC version'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install yq
+        run: |
+          # renovate: datasource=github-releases depName=mikefarah/yq
+          YQ_VERSION="4.44.3"
+          wget --quiet https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_linux_amd64 --output-document yq
+          chmod +x yq
+          sudo mv yq /usr/local/bin/yq
+          yq --version
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'latest'
+
+      - name: Install helm-docs
+        run: |
+          # renovate: datasource=github-releases depName=norwoodj/helm-docs
+          HELM_DOCS_VERSION="1.15.0"
+          wget --quiet https://github.com/norwoodj/helm-docs/releases/download/v${HELM_DOCS_VERSION}/helm-docs_${HELM_DOCS_VERSION}_Linux_x86_64.tar.gz
+          tar --extract --gzip --file helm-docs_${HELM_DOCS_VERSION}_Linux_x86_64.tar.gz helm-docs
+          chmod +x helm-docs
+          sudo mv helm-docs /usr/local/bin/helm-docs
+          helm-docs --version
+
+      - name: Get current chart version
+        id: current
+        run: |
+          CURRENT_VERSION=$(yq eval '.version' charts/papermc/Chart.yaml | tr -d '"')
+          CURRENT_APP_VERSION=$(yq eval '.appVersion' charts/papermc/Chart.yaml | tr -d '"')
+          echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "app_version=$CURRENT_APP_VERSION" >> $GITHUB_OUTPUT
+          echo "Current chart version: $CURRENT_VERSION"
+          echo "Current app version: $CURRENT_APP_VERSION"
+
+      - name: Calculate new chart version
+        id: new
+        run: |
+          CURRENT="${{ steps.current.outputs.version }}"
+          MAJOR=$(echo $CURRENT | cut -d. -f1)
+          MINOR=$(echo $CURRENT | cut -d. -f2)
+          NEW_MINOR=$((MINOR + 1))
+          NEW_VERSION="${MAJOR}.${NEW_MINOR}.0"
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "New chart version: $NEW_VERSION"
+
+      - name: Update Chart.yaml
+        run: |
+          CHART_FILE="charts/papermc/Chart.yaml"
+
+          # Update appVersion
+          yq eval -i ".appVersion = \"${{ inputs.version }}\"" $CHART_FILE
+
+          # Update version
+          yq eval -i ".version = \"${{ steps.new.outputs.version }}\"" $CHART_FILE
+
+          # Update changelog - prepend new entry
+          NEW_ENTRY="- kind: changed
+  description: Update PaperMC to version ${{ inputs.version }}"
+
+          # Get current changes
+          CURRENT_CHANGES=$(yq eval '.annotations."artifacthub.io/changes"' $CHART_FILE)
+
+          # Combine: new entry first, then existing
+          COMBINED="${NEW_ENTRY}
+${CURRENT_CHANGES}"
+
+          # Write back
+          yq eval -i ".annotations.\"artifacthub.io/changes\" = \"${COMBINED}\"" $CHART_FILE
+
+          echo "Chart.yaml updated:"
+          cat $CHART_FILE
+
+      - name: Regenerate README
+        run: |
+          helm-docs charts/papermc
+          echo "README.md regenerated"
+
+      - name: Create Pull Request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BRANCH="chore/update-papermc-${{ inputs.version }}"
+
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Create and switch to new branch
+          git checkout -b $BRANCH
+
+          # Stage changes
+          git add charts/papermc/Chart.yaml charts/papermc/README.md
+
+          # Commit
+          git commit --message "chore(chart): update PaperMC to ${{ inputs.version }}
+
+          - Update appVersion to ${{ inputs.version }}
+          - Bump chart version to ${{ steps.new.outputs.version }}
+          - Regenerate documentation
+
+          Co-Authored-By: Claude <noreply@anthropic.com>"
+
+          # Push branch
+          git push --set-upstream origin $BRANCH
+
+          # Create PR with body
+          gh pr create \
+            --title "chore(chart): update PaperMC to ${{ inputs.version }}" \
+            --body "## Summary
+          Automatic update of PaperMC version in Helm chart.
+
+          ## Changes
+          - **appVersion**: ${{ steps.current.outputs.app_version }} → ${{ inputs.version }}
+          - **Chart version**: ${{ steps.current.outputs.version }} → ${{ steps.new.outputs.version }} (minor bump)
+          - **README.md**: Regenerated with helm-docs
+
+          ## Automation
+          This PR was automatically created by the update-chart-version workflow.
+          After merge, the publish-chart workflow will automatically publish the new chart version to GHCR.
+
+          🤖 Generated by GitHub Actions" \
+            --base master \
+            --head $BRANCH
+
+          # Enable auto-merge
+          gh pr merge --auto --squash --delete-branch
+
+          echo "PR created and auto-merge enabled for branch: $BRANCH"
