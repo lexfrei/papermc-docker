@@ -1,0 +1,41 @@
+Successfully installed {{ .Chart.Name }}!
+
+Your PaperMC server is starting up. This may take a few minutes...
+
+To check the status of your server:
+
+  kubectl get statefulset {{ include "papermc.fullname" . }}
+  kubectl get pods -l app.kubernetes.io/instance={{ .Release.Name }}
+
+To view logs:
+
+  kubectl logs -f statefulset/{{ include "papermc.fullname" . }}
+
+{{- if eq .Values.service.type "LoadBalancer" }}
+
+To get the external IP of your Minecraft server:
+
+  kubectl get svc {{ include "papermc.fullname" . }}
+
+Once you have the EXTERNAL-IP, connect your Minecraft client to:
+  <EXTERNAL-IP>:{{ .Values.service.minecraftTCPPort }}
+{{- end }}
+
+{{- if .Values.ingress.enabled }}
+
+Your web interface (e.g., DynMap) is available at:
+{{- range .Values.ingress.hosts }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ .host }}
+{{- end }}
+{{- end }}
+
+{{- if .Values.httpRoute.enabled }}
+
+Your HTTPRoute is configured for:
+{{- range .Values.httpRoute.hostnames }}
+  https://{{ . }}
+{{- end }}
+{{- end }}
+
+For more information, visit:
+  https://github.com/lexfrei/papermc-docker

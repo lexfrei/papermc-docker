@@ -1,0 +1,153 @@
+name: Lint and Test Chart
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+    paths:
+      - 'charts/**'
+  workflow_dispatch:
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'latest'
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Set up chart-testing
+        uses: helm/chart-testing-action@v2.7.0
+
+      - name: Install tools
+        run: |
+          # helm-unittest
+          helm plugin install https://github.com/helm-unittest/helm-unittest.git
+
+          # JSON schema validator
+          pip install check-jsonschema
+
+          # Artifact Hub CLI
+          # renovate: datasource=github-releases depName=artifacthub/hub
+          AH_VERSION="1.21.0"
+          wget --quiet https://github.com/artifacthub/hub/releases/download/v${AH_VERSION}/ah_${AH_VERSION}_linux_amd64.tar.gz
+          tar --extract --gzip --file ah_${AH_VERSION}_linux_amd64.tar.gz
+          chmod +x ah
+          sudo mv ah /usr/local/bin/ah
+
+          # helm-docs
+          # renovate: datasource=github-releases depName=norwoodj/helm-docs
+          HELM_DOCS_VERSION="1.14.2"
+          wget --quiet https://github.com/norwoodj/helm-docs/releases/download/v${HELM_DOCS_VERSION}/helm-docs_${HELM_DOCS_VERSION}_Linux_x86_64.tar.gz
+          tar --extract --gzip --file helm-docs_${HELM_DOCS_VERSION}_Linux_x86_64.tar.gz
+          chmod +x helm-docs
+          sudo mv helm-docs /usr/local/bin/helm-docs
+
+          # markdownlint-cli
+          npm install --global markdownlint-cli
+
+      - name: Run Helm Lint
+        run: |
+          echo "🔍 Running Helm lint..."
+          helm lint charts/papermc
+
+      - name: Run Helm Unittest
+        run: |
+          CHART_DIR="charts/papermc"
+          if [ -d "$CHART_DIR/tests" ]; then
+            echo "🧪 Running unit tests..."
+            helm unittest $CHART_DIR --color --with-subchart=false
+          else
+            echo "ℹ️  No tests directory found, skipping unit tests"
+          fi
+
+      - name: Run chart-testing (lint)
+        run: |
+          echo "📋 Running chart-testing lint..."
+          ct lint --charts charts/papermc
+
+      - name: Run Artifact Hub Lint
+        run: |
+          echo "🏛️  Running Artifact Hub lint..."
+          ah lint --kind helm --path charts/papermc
+
+      - name: Validate JSON Schema
+        run: |
+          CHART_DIR="charts/papermc"
+          if [ -f "$CHART_DIR/values.schema.json" ]; then
+            echo "📝 Validating values.yaml against schema..."
+            check-jsonschema --schemafile "$CHART_DIR/values.schema.json" "$CHART_DIR/values.yaml"
+          else
+            echo "ℹ️  No values.schema.json found, skipping schema validation"
+          fi
+
+      - name: Check README Documentation
+        run: |
+          CHART_DIR="charts/papermc"
+          if [ -f "$CHART_DIR/README.md.gotmpl" ]; then
+            echo "📚 Checking if README.md is up to date..."
+            helm-docs --chart-search-root=charts
+            if ! git diff --exit-code "$CHART_DIR/README.md"; then
+              echo "❌ README.md is out of date. Please run 'helm-docs charts/papermc' locally and commit the changes."
+              exit 1
+            else
+              echo "✅ README.md is up to date"
+            fi
+          else
+            echo "ℹ️  No README.md.gotmpl found, skipping README check"
+          fi
+
+      - name: Run Markdownlint
+        run: |
+          CHART_DIR="charts/papermc"
+          if [ -f "$CHART_DIR/README.md" ]; then
+            echo "📝 Running markdownlint on README.md..."
+            markdownlint "$CHART_DIR/README.md" --config "$CHART_DIR/.markdownlint.yaml"
+          else
+            echo "ℹ️  No README.md found, skipping markdownlint"
+          fi
+
+      - name: Template Chart
+        run: |
+          echo "🔨 Testing chart templating..."
+          helm template test-release charts/papermc
+
+      - name: Template Chart with Extra Ports
+        run: |
+          echo "🔨 Testing chart with extra ports (DynMap)..."
+          helm template test-release charts/papermc \
+            --set service.extraPorts[0].name=dynmap \
+            --set service.extraPorts[0].port=8123 \
+            --set service.extraPorts[0].protocol=TCP
+
+      - name: Template Chart with Ingress
+        run: |
+          echo "🔨 Testing chart with Ingress enabled..."
+          helm template test-release charts/papermc \
+            --set ingress.enabled=true \
+            --set ingress.hosts[0].host=map.example.com
+
+      - name: Template Chart with HTTPRoute
+        run: |
+          echo "🔨 Testing chart with HTTPRoute enabled..."
+          helm template test-release charts/papermc \
+            --set httpRoute.enabled=true
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## 🧪 Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "All validation tests completed for PaperMC chart" >> $GITHUB_STEP_SUMMARY

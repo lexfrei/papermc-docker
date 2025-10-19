@@ -1,0 +1,39 @@
+annotations:
+  artifacthub.io/category: game-servers
+  artifacthub.io/changes: |-
+    - kind: added
+      description: Initial release of PaperMC Helm chart
+    - kind: added
+      description: Support for flexible service port configuration for plugins
+    - kind: added
+      description: Optional Ingress and HTTPRoute for web interfaces
+  artifacthub.io/license: BSD-3-Clause
+  artifacthub.io/links: |
+    - name: Chart Repository
+      url: https://github.com/lexfrei/papermc-docker/
+    - name: PaperMC
+      url: https://papermc.io/
+    - name: Docker Hub
+      url: https://hub.docker.com/r/lexfrei/papermc
+apiVersion: v2
+name: papermc
+description: PaperMC Minecraft server Helm chart for Kubernetes
+type: application
+version: "0.0.1"
+# renovate: datasource=docker depName=lexfrei/papermc
+appVersion: "1.21.10"
+icon: https://avatars.githubusercontent.com/u/7608950?s=200&v=4
+home: https://github.com/lexfrei/papermc-docker/
+keywords:
+  - minecraft
+  - papermc
+  - game-server
+  - helm-chart
+  - kubernetes
+maintainers:
+  - name: lexfrei
+    email: f@lex.la
+    url: https://github.com/lexfrei
+sources:
+  - https://github.com/lexfrei/papermc-docker/
+  - https://github.com/PaperMC/Paper

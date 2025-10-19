@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "papermc.fullname" . }}
+  labels:
+    {{- include "papermc.labels" . | nindent 4 }}
+  {{- with .Values.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.minecraftTCPPort }}
+      targetPort: minecraft-tcp
+      protocol: TCP
+      name: minecraft-tcp
+    - port: {{ .Values.service.minecraftUDPPort }}
+      targetPort: minecraft-udp
+      protocol: UDP
+      name: minecraft-udp
+    {{- range .Values.service.extraPorts }}
+    - port: {{ .port }}
+      targetPort: {{ .name }}
+      protocol: {{ .protocol }}
+      name: {{ .name }}
+    {{- end }}
+  selector:
+    {{- include "papermc.selectorLabels" . | nindent 4 }}
