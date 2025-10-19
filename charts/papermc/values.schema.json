@@ -37,31 +37,28 @@
       "type": "string",
       "description": "Override the fullname of the chart"
     },
-    "service": {
+    "ports": {
       "type": "object",
       "properties": {
-        "type": {
-          "type": "string",
-          "enum": ["ClusterIP", "NodePort", "LoadBalancer"],
-          "description": "Service type"
-        },
-        "annotations": {
+        "minecraft": {
           "type": "object",
-          "description": "Service annotations"
+          "properties": {
+            "tcp": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535,
+              "description": "Minecraft TCP port"
+            },
+            "udp": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535,
+              "description": "Minecraft UDP port"
+            }
+          },
+          "required": ["tcp", "udp"]
         },
-        "minecraftTCPPort": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 65535,
-          "description": "Minecraft TCP port"
-        },
-        "minecraftUDPPort": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 65535,
-          "description": "Minecraft UDP port"
-        },
-        "extraPorts": {
+        "extra": {
           "type": "array",
           "items": {
             "type": "object",
@@ -81,10 +78,25 @@
             },
             "required": ["name", "port", "protocol"]
           },
-          "description": "Additional service ports for plugins"
+          "description": "Additional ports for plugins"
         }
       },
-      "required": ["type", "minecraftTCPPort", "minecraftUDPPort"]
+      "required": ["minecraft", "extra"]
+    },
+    "service": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["ClusterIP", "NodePort", "LoadBalancer"],
+          "description": "Service type"
+        },
+        "annotations": {
+          "type": "object",
+          "description": "Service annotations"
+        }
+      },
+      "required": ["type"]
     },
     "ingress": {
       "type": "object",
@@ -93,27 +105,9 @@
           "type": "boolean",
           "description": "Enable ingress"
         },
-        "className": {
-          "type": "string",
-          "description": "Ingress class name"
-        },
-        "annotations": {
+        "spec": {
           "type": "object",
-          "description": "Ingress annotations"
-        },
-        "hosts": {
-          "type": "array",
-          "items": {
-            "type": "object"
-          },
-          "description": "Ingress hosts"
-        },
-        "tls": {
-          "type": "array",
-          "items": {
-            "type": "object"
-          },
-          "description": "Ingress TLS configuration"
+          "description": "Full Ingress spec (excluding metadata)"
         }
       },
       "required": ["enabled"]
@@ -125,25 +119,9 @@
           "type": "boolean",
           "description": "Enable HTTPRoute (Gateway API)"
         },
-        "parentRefs": {
-          "type": "array",
-          "items": {
-            "type": "object"
-          },
-          "description": "Parent gateway references"
-        },
-        "hostnames": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "HTTPRoute hostnames"
-        },
-        "backendPort": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 65535,
-          "description": "Backend service port"
+        "spec": {
+          "type": "object",
+          "description": "Full HTTPRoute spec (excluding metadata)"
         }
       },
       "required": ["enabled"]
@@ -226,28 +204,10 @@
       "type": "object",
       "description": "Container security context"
     },
-    "serviceAccount": {
-      "type": "object",
-      "properties": {
-        "create": {
-          "type": "boolean",
-          "description": "Create service account"
-        },
-        "annotations": {
-          "type": "object",
-          "description": "Service account annotations"
-        },
-        "name": {
-          "type": "string",
-          "description": "Service account name"
-        }
-      },
-      "required": ["create"]
-    },
     "updateStrategy": {
       "type": "object",
       "description": "Update strategy"
     }
   },
-  "required": ["image", "service", "ingress", "httpRoute", "persistence", "resources"]
+  "required": ["image", "ports", "service", "ingress", "httpRoute", "persistence", "resources"]
 }

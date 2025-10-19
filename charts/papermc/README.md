@@ -1,6 +1,6 @@
 # papermc
 
-![Version: 0.0.1](https://img.shields.io/badge/Version-0.0.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.21.10](https://img.shields.io/badge/AppVersion-1.21.10-informational?style=flat-square)
+![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.21.10](https://img.shields.io/badge/AppVersion-1.21.10-informational?style=flat-square)
 
 PaperMC Minecraft server Helm chart for Kubernetes
 
@@ -39,12 +39,12 @@ This chart is published to GitHub Container Registry (GHCR) as an OCI artifact.
 # Install from GHCR
 helm install papermc \
   oci://ghcr.io/lexfrei/papermc \
-  --version 0.0.1
+  --version 0.1.0
 
 # Install with custom values
 helm install papermc \
   oci://ghcr.io/lexfrei/papermc \
-  --version 0.0.1 \
+  --version 0.1.0 \
   --values values.yaml
 ```
 
@@ -60,15 +60,13 @@ helm delete papermc
 |-----|------|---------|-------------|
 | affinity | object | `{}` | Affinity for pod assignment |
 | fullnameOverride | string | `""` |  |
-| httpRoute | object | `{"backendPort":8123,"enabled":false,"hostnames":["map.example.com"],"parentRefs":[{"name":"cilium-gateway","namespace":"kube-system","sectionName":"https"}]}` | HTTPRoute configuration (Gateway API) for web interfaces |
-| httpRoute.backendPort | int | `8123` | Backend service port for the HTTPRoute |
-| httpRoute.hostnames | list | `["map.example.com"]` | Hostnames for the HTTPRoute |
-| httpRoute.parentRefs | list | `[{"name":"cilium-gateway","namespace":"kube-system","sectionName":"https"}]` | Parent gateway reference |
+| httpRoute | object | `{"enabled":false,"spec":{}}` | HTTPRoute configuration (Gateway API) for web interfaces Provides full control over the HTTPRoute spec for maximum flexibility |
+| httpRoute.spec | object | `{}` | Full HTTPRoute spec (excluding metadata) The service name will be auto-injected as the chart fullname |
 | image | object | `{"pullPolicy":"IfNotPresent","repository":"lexfrei/papermc","tag":""}` | Image configuration |
 | image.tag | string | `""` | Overrides the image tag whose default is the chart appVersion |
 | imagePullSecrets | list | `[]` |  |
-| ingress | object | `{"annotations":{},"className":"nginx","enabled":false,"hosts":[{"host":"map.example.com","paths":[{"path":"/","pathType":"Prefix","servicePort":"dynmap"}]}],"tls":[]}` | Ingress configuration for web interfaces (e.g., DynMap) |
-| ingress.hosts[0].paths[0].servicePort | string | `"dynmap"` | Backend service port name (e.g., dynmap) |
+| ingress | object | `{"enabled":false,"spec":{}}` | Ingress configuration for web interfaces (e.g., DynMap) Provides full control over the Ingress spec for maximum flexibility |
+| ingress.spec | object | `{}` | Full Ingress spec (excluding metadata) The service name will be auto-injected as the chart fullname |
 | livenessProbe | object | `{"enabled":true,"initialDelaySeconds":60,"periodSeconds":15,"tcpSocket":{"port":"minecraft-tcp"}}` | Liveness probe configuration |
 | nameOverride | string | `""` |  |
 | nodeSelector | object | `{}` | Node selector for pod assignment |
@@ -80,19 +78,15 @@ helm delete papermc
 | podAnnotations | object | `{}` | Pod annotations |
 | podLabels | object | `{}` | Pod labels |
 | podSecurityContext | object | `{}` | Security context for the pod |
+| ports | object | `{"extra":[],"minecraft":{"tcp":25565,"udp":25565}}` | Port configuration |
+| ports.extra | list | `[]` | Additional ports for plugins (e.g., DynMap, BlueMap, etc.) Each port will be exposed in both the Pod and Service |
+| ports.minecraft | object | `{"tcp":25565,"udp":25565}` | Minecraft server ports (TCP and UDP) |
 | readinessProbe | object | `{"enabled":true,"initialDelaySeconds":30,"periodSeconds":10,"tcpSocket":{"port":"minecraft-tcp"}}` | Readiness probe configuration |
 | resources | object | `{"limits":{"cpu":"2000m","memory":"4Gi"},"requests":{"cpu":"1000m","memory":"4Gi"}}` | Resource limits and requests |
 | securityContext | object | `{}` | Security context for the container |
-| service | object | `{"annotations":{},"extraPorts":[],"minecraftTCPPort":25565,"minecraftUDPPort":25565,"type":"LoadBalancer"}` | Service configuration |
+| service | object | `{"annotations":{},"type":"LoadBalancer"}` | Service configuration |
 | service.annotations | object | `{}` | Service annotations (e.g., for LoadBalancer IP assignment) |
-| service.extraPorts | list | `[]` | Additional ports for plugins (e.g., DynMap, BlueMap, etc.) |
-| service.minecraftTCPPort | int | `25565` | Minecraft TCP port |
-| service.minecraftUDPPort | int | `25565` | Minecraft UDP port |
 | service.type | string | `"LoadBalancer"` | Service type |
-| serviceAccount | object | `{"annotations":{},"create":true,"name":""}` | Service account configuration |
-| serviceAccount.annotations | object | `{}` | Annotations to add to the service account |
-| serviceAccount.create | bool | `true` | Specifies whether a service account should be created |
-| serviceAccount.name | string | `""` | The name of the service account to use |
 | tolerations | list | `[]` | Tolerations for pod assignment |
 | updateStrategy | object | `{"type":"RollingUpdate"}` | Update strategy |
 
@@ -120,27 +114,31 @@ resources:
 Enable additional port for DynMap web interface:
 
 ```yaml
-service:
-  extraPorts:
+ports:
+  extra:
     - name: dynmap
       port: 8123
       protocol: TCP
 
 ingress:
   enabled: true
-  className: nginx
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-  hosts:
-    - host: map.example.com
-      paths:
-        - path: /
-          pathType: Prefix
-          servicePort: dynmap
-  tls:
-    - secretName: map-tls
-      hosts:
-        - map.example.com
+  spec:
+    ingressClassName: nginx
+    tls:
+      - secretName: map-tls
+        hosts:
+          - map.example.com
+    rules:
+      - host: map.example.com
+        http:
+          paths:
+            - path: /
+              pathType: Prefix
+              backend:
+                service:
+                  name: papermc  # Will be auto-replaced with release name
+                  port:
+                    name: dynmap
 ```
 
 ### Server with Multiple Plugins
@@ -148,8 +146,8 @@ ingress:
 Configure multiple plugin web interfaces:
 
 ```yaml
-service:
-  extraPorts:
+ports:
+  extra:
     - name: dynmap
       port: 8123
       protocol: TCP
@@ -179,21 +177,29 @@ affinity:
 Use Gateway API instead of Ingress:
 
 ```yaml
-service:
-  extraPorts:
+ports:
+  extra:
     - name: dynmap
       port: 8123
       protocol: TCP
 
 httpRoute:
   enabled: true
-  parentRefs:
-    - name: cilium-gateway
-      namespace: kube-system
-      sectionName: https
-  hostnames:
-    - map.example.com
-  backendPort: 8123
+  spec:
+    parentRefs:
+      - name: cilium-gateway
+        namespace: kube-system
+        sectionName: https
+    hostnames:
+      - map.example.com
+    rules:
+      - matches:
+          - path:
+              type: PathPrefix
+              value: /
+        backendRefs:
+          - name: papermc  # Will be auto-replaced with release name
+            port: 8123
 ```
 
 ### LoadBalancer with Fixed IP

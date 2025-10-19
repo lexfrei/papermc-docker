@@ -28,7 +28,6 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "papermc.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
@@ -39,12 +38,12 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: minecraft-tcp
-              containerPort: {{ .Values.service.minecraftTCPPort }}
+              containerPort: {{ .Values.ports.minecraft.tcp }}
               protocol: TCP
             - name: minecraft-udp
-              containerPort: {{ .Values.service.minecraftUDPPort }}
+              containerPort: {{ .Values.ports.minecraft.udp }}
               protocol: UDP
-            {{- range .Values.service.extraPorts }}
+            {{- range .Values.ports.extra }}
             - name: {{ .name }}
               containerPort: {{ .port }}
               protocol: {{ .protocol }}

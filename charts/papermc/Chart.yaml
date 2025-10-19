@@ -1,12 +1,14 @@
 annotations:
   artifacthub.io/category: skip-prediction
   artifacthub.io/changes: |-
-    - kind: added
-      description: Initial release of PaperMC Helm chart
-    - kind: added
-      description: Support for flexible service port configuration for plugins
-    - kind: added
-      description: Optional Ingress and HTTPRoute for web interfaces
+    - kind: changed
+      description: "BREAKING: Removed ServiceAccount (not needed for Minecraft server)"
+    - kind: changed
+      description: "BREAKING: Restructured port configuration - moved to ports.minecraft.tcp/udp and ports.extra"
+    - kind: changed
+      description: "BREAKING: Ingress now uses custom spec passthrough for maximum flexibility"
+    - kind: changed
+      description: "BREAKING: HTTPRoute now uses custom spec passthrough for maximum flexibility"
   artifacthub.io/license: BSD-3-Clause
   artifacthub.io/links: |
     - name: Chart Repository
@@ -19,7 +21,7 @@ apiVersion: v2
 name: papermc
 description: PaperMC Minecraft server Helm chart for Kubernetes
 type: application
-version: "0.0.1"
+version: "0.1.0"
 # renovate: datasource=docker depName=lexfrei/papermc
 appVersion: "1.21.10"
 icon: https://avatars.githubusercontent.com/u/7608950?s=200&v=4
