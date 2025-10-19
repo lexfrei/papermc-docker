@@ -1,0 +1,153 @@
+suite: test papermc chart
+templates:
+  - statefulset.yaml
+  - service.yaml
+  - serviceaccount.yaml
+  - ingress.yaml
+  - httproute.yaml
+tests:
+  - it: should create all core resources with default values
+    asserts:
+      - isKind:
+          of: StatefulSet
+        template: statefulset.yaml
+      - isKind:
+          of: Service
+        template: service.yaml
+      - isKind:
+          of: ServiceAccount
+        template: serviceaccount.yaml
+
+  - it: should set correct image with appVersion by default
+    template: statefulset.yaml
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: ^lexfrei/papermc:1\.21\.10$
+
+  - it: should allow custom image tag
+    template: statefulset.yaml
+    set:
+      image.tag: "latest"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: lexfrei/papermc:latest
+
+  - it: should create service with minecraft ports
+    template: service.yaml
+    asserts:
+      - contains:
+          path: spec.ports
+          content:
+            name: minecraft-tcp
+            port: 25565
+            targetPort: minecraft-tcp
+            protocol: TCP
+      - contains:
+          path: spec.ports
+          content:
+            name: minecraft-udp
+            port: 25565
+            targetPort: minecraft-udp
+            protocol: UDP
+
+  - it: should add extra ports when specified
+    template: service.yaml
+    set:
+      service.extraPorts:
+        - name: dynmap
+          port: 8123
+          protocol: TCP
+        - name: bluemap
+          port: 8100
+          protocol: TCP
+    asserts:
+      - contains:
+          path: spec.ports
+          content:
+            name: dynmap
+            port: 8123
+            targetPort: dynmap
+            protocol: TCP
+      - contains:
+          path: spec.ports
+          content:
+            name: bluemap
+            port: 8100
+            targetPort: bluemap
+            protocol: TCP
+
+  - it: should not create ingress when disabled
+    template: ingress.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should create ingress when enabled
+    template: ingress.yaml
+    set:
+      ingress.enabled: true
+    asserts:
+      - isKind:
+          of: Ingress
+      - equal:
+          path: spec.ingressClassName
+          value: nginx
+
+  - it: should not create httproute when disabled
+    template: httproute.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should create httproute when enabled
+    template: httproute.yaml
+    set:
+      httpRoute.enabled: true
+    asserts:
+      - isKind:
+          of: HTTPRoute
+      - isAPIVersion:
+          of: gateway.networking.k8s.io/v1
+
+  - it: should configure persistence with default values
+    template: statefulset.yaml
+    asserts:
+      - exists:
+          path: spec.volumeClaimTemplates[0]
+      - equal:
+          path: spec.volumeClaimTemplates[0].spec.resources.requests.storage
+          value: 30Gi
+      - equal:
+          path: spec.volumeClaimTemplates[0].spec.accessModes[0]
+          value: ReadWriteOnce
+
+  - it: should add extra ports to statefulset containers
+    template: statefulset.yaml
+    set:
+      service.extraPorts:
+        - name: dynmap
+          port: 8123
+          protocol: TCP
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: dynmap
+            containerPort: 8123
+            protocol: TCP
+
+  - it: should configure liveness and readiness probes
+    template: statefulset.yaml
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].livenessProbe
+      - exists:
+          path: spec.template.spec.containers[0].readinessProbe
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.tcpSocket.port
+          value: minecraft-tcp
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.tcpSocket.port
+          value: minecraft-tcp

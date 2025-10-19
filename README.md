@@ -8,6 +8,23 @@
 
 A lightweight, optimized Docker image for running PaperMC Minecraft servers.
 
+## About PaperMC
+
+**Important**: This is a third-party Docker image and Helm chart packaging of [PaperMC](https://papermc.io/). PaperMC itself is developed and maintained by the PaperMC team, not by this repository's maintainers.
+
+- **Upstream Project**: [PaperMC](https://github.com/PaperMC/Paper)
+- **Official Documentation**: [docs.papermc.io](https://docs.papermc.io/)
+- **Official Discord**: [discord.gg/papermc](https://discord.gg/papermc)
+
+For questions, issues, or support regarding **PaperMC server itself** (gameplay, plugins, server configuration, etc.), please refer to the official PaperMC resources above.
+
+This repository only provides:
+- Docker containerization of PaperMC
+- Kubernetes Helm chart for deployment
+- CI/CD automation for image builds
+
+For issues related to the **Docker image or Helm chart** (container build, deployment, chart configuration), please use [this repository's issue tracker](https://github.com/lexfrei/papermc-docker/issues).
+
 ## Compatibility
 
 This server is compatible with:
@@ -59,6 +76,36 @@ Only the three most recent minor versions are maintained, not all versions withi
 > **Recommendation**: Use `latest` tag for testing, but switch to a specific version-build tag (e.g., `<version>-<build>`) for production environments to ensure stability.
 
 ## Usage
+
+### Helm Chart (Kubernetes)
+
+A Helm chart is available for Kubernetes deployments, providing easy installation and configuration with support for various plugins, ingress, and advanced networking options.
+
+#### Installation
+
+```bash
+# Install the chart from GitHub Container Registry
+helm install papermc \
+  oci://ghcr.io/lexfrei/papermc \
+  --version 0.0.1
+
+# Install with custom values
+helm install papermc \
+  oci://ghcr.io/lexfrei/papermc \
+  --version 0.0.1 \
+  --values values.yaml
+```
+
+#### Chart Features
+
+- Flexible service configuration with support for multiple plugin ports
+- Optional Ingress and HTTPRoute (Gateway API) support
+- Configurable resource limits and requests
+- Node affinity and tolerations
+- Persistent storage with customizable storage classes
+- Liveness and readiness probes
+
+For detailed chart documentation and configuration examples, see the [chart documentation](charts/papermc/README.md).
 
 ### Environment Variables
 

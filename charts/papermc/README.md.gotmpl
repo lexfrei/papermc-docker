@@ -1,0 +1,217 @@
+{{ template "chart.header" . }}
+
+{{ template "chart.deprecationWarning" . }}
+
+{{ template "chart.badgesSection" . }}
+
+{{ template "chart.description" . }}
+
+{{ template "chart.homepageLine" . }}
+
+## About PaperMC
+
+**Important**: This is a third-party Helm chart for [PaperMC](https://papermc.io/). PaperMC itself is developed and maintained by the PaperMC team, not by this chart's maintainers.
+
+- **Upstream Project**: [PaperMC](https://github.com/PaperMC/Paper)
+- **Official Documentation**: [docs.papermc.io](https://docs.papermc.io/)
+- **Official Discord**: [discord.gg/papermc](https://discord.gg/papermc)
+
+For questions, issues, or support regarding **PaperMC server itself** (gameplay, plugins, server configuration, etc.), please refer to the official PaperMC resources above.
+
+This Helm chart only provides Kubernetes deployment automation for PaperMC.
+
+For issues related to the **Helm chart** (deployment, chart configuration, Kubernetes resources), please use the [chart repository's issue tracker](https://github.com/lexfrei/papermc-docker/issues).
+
+{{ template "chart.maintainersSection" . }}
+
+{{ template "chart.sourcesSection" . }}
+
+{{ template "chart.requirementsSection" . }}
+
+## Installing the Chart
+
+This chart is published to GitHub Container Registry (GHCR) as an OCI artifact.
+
+```bash
+# Install from GHCR
+helm install papermc \
+  oci://ghcr.io/lexfrei/papermc \
+  --version {{ template "chart.version" . }}
+
+# Install with custom values
+helm install papermc \
+  oci://ghcr.io/lexfrei/papermc \
+  --version {{ template "chart.version" . }} \
+  --values values.yaml
+```
+
+## Uninstalling the Chart
+
+```bash
+helm delete papermc
+```
+
+{{ template "chart.valuesSection" . }}
+
+## Example Configurations
+
+### Simple Server
+
+Minimal configuration for a basic Minecraft server:
+
+```yaml
+persistence:
+  size: 30Gi
+
+resources:
+  requests:
+    memory: "4Gi"
+    cpu: "1000m"
+  limits:
+    memory: "4Gi"
+    cpu: "2000m"
+```
+
+### Server with DynMap Plugin
+
+Enable additional port for DynMap web interface:
+
+```yaml
+service:
+  extraPorts:
+    - name: dynmap
+      port: 8123
+      protocol: TCP
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: map.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+          servicePort: dynmap
+  tls:
+    - secretName: map-tls
+      hosts:
+        - map.example.com
+```
+
+### Server with Multiple Plugins
+
+Configure multiple plugin web interfaces:
+
+```yaml
+service:
+  extraPorts:
+    - name: dynmap
+      port: 8123
+      protocol: TCP
+    - name: bluemap
+      port: 8100
+      protocol: TCP
+```
+
+### Server on Specific Node
+
+Use node affinity to schedule on a specific node:
+
+```yaml
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - mc-node-01
+```
+
+### Gateway API (HTTPRoute) Configuration
+
+Use Gateway API instead of Ingress:
+
+```yaml
+service:
+  extraPorts:
+    - name: dynmap
+      port: 8123
+      protocol: TCP
+
+httpRoute:
+  enabled: true
+  parentRefs:
+    - name: cilium-gateway
+      namespace: kube-system
+      sectionName: https
+  hostnames:
+    - map.example.com
+  backendPort: 8123
+```
+
+### LoadBalancer with Fixed IP
+
+Assign a specific IP to the LoadBalancer service:
+
+```yaml
+service:
+  type: LoadBalancer
+  annotations:
+    io.cilium/lb-ipam-ips: "172.16.100.253"
+    # Or for MetalLB:
+    # metallb.io/address-pool: minecraft-pool
+```
+
+### Custom Image Version
+
+Override the image tag to use a specific PaperMC version:
+
+```yaml
+image:
+  tag: "1.21.5-20"
+```
+
+## Persistence
+
+By default, the chart creates a PersistentVolumeClaim with 30Gi storage. All server data is stored in `/data` inside the container, which is mounted from this PVC.
+
+To use a different storage class or size:
+
+```yaml
+persistence:
+  storageClassName: longhorn
+  size: 50Gi
+```
+
+To use an existing PVC:
+
+```yaml
+persistence:
+  existingClaim: my-existing-pvc
+```
+
+## Resource Management
+
+The default resource configuration is optimized for a server with 10-20 players:
+
+```yaml
+resources:
+  requests:
+    memory: "4Gi"
+    cpu: "1000m"
+  limits:
+    memory: "4Gi"
+    cpu: "2000m"
+```
+
+Adjust based on your player count and plugin usage.
+
+## Probes
+
+The chart includes liveness and readiness probes using TCP socket checks on the Minecraft port. These ensure the server is running and ready to accept connections.
+
+{{ template "helm-docs.versionFooter" . }}
