@@ -110,3 +110,52 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  check-chart-version:
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    if: success() && github.ref == 'refs/heads/master'
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install yq
+        run: |
+          # renovate: datasource=github-releases depName=mikefarah/yq
+          YQ_VERSION="4.44.3"
+          wget --quiet https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_linux_amd64 --output-document yq
+          chmod +x yq
+          sudo mv yq /usr/local/bin/yq
+
+      - name: Get versions
+        id: versions
+        run: |
+          LATEST="${{ needs.prepare.outputs.latest }}"
+          CURRENT_APP_VERSION=$(yq eval '.appVersion' charts/papermc/Chart.yaml | tr -d '"')
+
+          echo "latest=$LATEST" >> $GITHUB_OUTPUT
+          echo "current=$CURRENT_APP_VERSION" >> $GITHUB_OUTPUT
+
+          echo "Latest PaperMC version: $LATEST"
+          echo "Current chart appVersion: $CURRENT_APP_VERSION"
+
+      - name: Trigger chart update
+        if: steps.versions.outputs.latest != steps.versions.outputs.current
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Version mismatch detected. Triggering chart update workflow..."
+          echo "Latest: ${{ steps.versions.outputs.latest }}"
+          echo "Current: ${{ steps.versions.outputs.current }}"
+
+          gh workflow run update-chart-version.yml \
+            --field version=${{ steps.versions.outputs.latest }}
+
+          echo "Chart update workflow triggered successfully"
+
+      - name: No update needed
+        if: steps.versions.outputs.latest == steps.versions.outputs.current
+        run: |
+          echo "Chart is already up to date with PaperMC version ${{ steps.versions.outputs.current }}"
