@@ -1,5 +1,5 @@
 annotations:
-  artifacthub.io/category: game-servers
+  artifacthub.io/category: skip-prediction
   artifacthub.io/changes: |-
     - kind: added
       description: Initial release of PaperMC Helm chart
