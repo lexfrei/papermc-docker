@@ -29,8 +29,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Check if there are changes
-          if git diff --quiet .github/LAST_ACTIVITY; then
+          # Add file and check if there are changes
+          git add .github/LAST_ACTIVITY
+          if git diff --staged --quiet; then
             echo "No changes to commit"
             exit 0
           fi
@@ -40,7 +41,6 @@ jobs:
 
           # Create and push branch
           git checkout -b "$BRANCH_NAME"
-          git add .github/LAST_ACTIVITY
           git commit --message "chore: update activity timestamp"
           git push origin "$BRANCH_NAME"
 
