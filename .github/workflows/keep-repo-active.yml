@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -21,14 +22,33 @@ jobs:
           mkdir -p .github
           echo "Last updated: $(date -u)" > .github/LAST_ACTIVITY
 
-      - name: Commit and push changes
+      - name: Create PR with auto-merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .github/LAST_ACTIVITY
-          if git diff --staged --quiet; then
+
+          # Check if there are changes
+          if git diff --quiet .github/LAST_ACTIVITY; then
             echo "No changes to commit"
-          else
-            git commit --message "chore: update activity timestamp [skip ci]"
-            git push
+            exit 0
           fi
+
+          # Create unique branch name
+          BRANCH_NAME="chore/activity-$(date -u +%Y%m%d-%H%M%S)"
+
+          # Create and push branch
+          git checkout -b "$BRANCH_NAME"
+          git add .github/LAST_ACTIVITY
+          git commit --message "chore: update activity timestamp"
+          git push origin "$BRANCH_NAME"
+
+          # Create PR and enable auto-merge
+          gh pr create \
+            --title "chore: update activity timestamp" \
+            --body "Automated activity update to keep repository active." \
+            --base master \
+            --head "$BRANCH_NAME"
+
+          gh pr merge "$BRANCH_NAME" --auto --squash --delete-branch
