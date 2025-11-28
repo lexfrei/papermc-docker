@@ -268,7 +268,7 @@ brew install helm
 brew install norwoodj/tap/helm-docs
 
 # helm-unittest (for testing)
-helm plugin install https://github.com/helm-unittest/helm-unittest.git
+helm plugin install https://github.com/helm-unittest/helm-unittest.git --verify=false
 
 # JSON schema validator
 pip install check-jsonschema
