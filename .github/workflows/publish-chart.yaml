@@ -128,7 +128,7 @@ jobs:
 
           # Unit tests
           if [ -d "${CHART_PATH}/tests" ]; then
-            helm unittest "${CHART_PATH}" --color
+            helm unittest "${CHART_PATH}" --with-subchart=false
           else
             echo "No tests found, skipping unit tests"
           fi

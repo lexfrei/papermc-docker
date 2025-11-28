@@ -167,7 +167,7 @@ The Helm chart is located in `charts/papermc/` with the following structure:
 helm lint charts/papermc
 
 # Run unit tests
-helm unittest charts/papermc --color
+helm unittest charts/papermc
 
 # Validate JSON schema
 check-jsonschema --schemafile charts/papermc/values.schema.json charts/papermc/values.yaml

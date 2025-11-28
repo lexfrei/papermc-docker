@@ -68,7 +68,7 @@ jobs:
           CHART_DIR="charts/papermc"
           if [ -d "$CHART_DIR/tests" ]; then
             echo "🧪 Running unit tests..."
-            helm unittest $CHART_DIR --color --with-subchart=false
+            helm unittest $CHART_DIR --with-subchart=false
           else
             echo "ℹ️  No tests directory found, skipping unit tests"
           fi
