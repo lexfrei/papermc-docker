@@ -29,3 +29,8 @@ MD034: false
 
 # MD041/first-line-heading - First line in file should be a top level heading
 MD041: false
+
+# MD060/table-column-style - Table column style
+# Set to consistent to allow helm-docs generated tables
+MD060:
+  style: "consistent"
