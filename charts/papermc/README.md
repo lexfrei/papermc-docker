@@ -1,6 +1,6 @@
 # papermc
 
-![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.21.10](https://img.shields.io/badge/AppVersion-1.21.10-informational?style=flat-square)
+![Version: 0.2.0](https://img.shields.io/badge/Version-0.2.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.21.11](https://img.shields.io/badge/AppVersion-1.21.11-informational?style=flat-square)
 
 PaperMC Minecraft server Helm chart for Kubernetes
 
@@ -39,12 +39,12 @@ This chart is published to GitHub Container Registry (GHCR) as an OCI artifact.
 # Install from GHCR
 helm install papermc \
   oci://ghcr.io/lexfrei/papermc \
-  --version 0.1.0
+  --version 0.2.0
 
 # Install with custom values
 helm install papermc \
   oci://ghcr.io/lexfrei/papermc \
-  --version 0.1.0 \
+  --version 0.2.0 \
   --values values.yaml
 ```
 
