@@ -74,6 +74,42 @@ tests:
             targetPort: bluemap
             protocol: TCP
 
+  - it: should not render externalTrafficPolicy when empty
+    template: service.yaml
+    asserts:
+      - notExists:
+          path: spec.externalTrafficPolicy
+
+  - it: should render externalTrafficPolicy Local for LoadBalancer
+    template: service.yaml
+    set:
+      service.type: LoadBalancer
+      service.externalTrafficPolicy: Local
+    asserts:
+      - equal:
+          path: spec.externalTrafficPolicy
+          value: Local
+
+  - it: should render externalTrafficPolicy Cluster for LoadBalancer
+    template: service.yaml
+    set:
+      service.type: LoadBalancer
+      service.externalTrafficPolicy: Cluster
+    asserts:
+      - equal:
+          path: spec.externalTrafficPolicy
+          value: Cluster
+
+  - it: should render externalTrafficPolicy for NodePort
+    template: service.yaml
+    set:
+      service.type: NodePort
+      service.externalTrafficPolicy: Local
+    asserts:
+      - equal:
+          path: spec.externalTrafficPolicy
+          value: Local
+
   - it: should not create ingress when disabled
     template: ingress.yaml
     asserts:

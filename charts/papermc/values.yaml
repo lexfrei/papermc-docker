@@ -38,6 +38,9 @@ service:
   annotations: {}
     # io.cilium/lb-ipam-ips: "172.16.100.253"
     # metallb.io/address-pool: minecraft-pool
+  # -- External traffic policy (Cluster or Local). Only for LoadBalancer/NodePort.
+  # Local preserves client source IP but may cause uneven traffic distribution.
+  externalTrafficPolicy: ""
 
 # -- Ingress configuration for web interfaces (e.g., DynMap)
 # Provides full control over the Ingress spec for maximum flexibility
