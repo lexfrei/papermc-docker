@@ -84,8 +84,9 @@ helm delete papermc
 | readinessProbe | object | `{"enabled":true,"initialDelaySeconds":30,"periodSeconds":10,"tcpSocket":{"port":"minecraft-tcp"}}` | Readiness probe configuration |
 | resources | object | `{"limits":{"cpu":"2000m","memory":"4Gi"},"requests":{"cpu":"1000m","memory":"4Gi"}}` | Resource limits and requests |
 | securityContext | object | `{}` | Security context for the container |
-| service | object | `{"annotations":{},"type":"LoadBalancer"}` | Service configuration |
+| service | object | `{"annotations":{},"externalTrafficPolicy":"","type":"LoadBalancer"}` | Service configuration |
 | service.annotations | object | `{}` | Service annotations (e.g., for LoadBalancer IP assignment) |
+| service.externalTrafficPolicy | string | `""` | External traffic policy (Cluster or Local). Only for LoadBalancer/NodePort. Local preserves client source IP but may cause uneven traffic distribution. |
 | service.type | string | `"LoadBalancer"` | Service type |
 | tolerations | list | `[]` | Tolerations for pod assignment |
 | updateStrategy | object | `{"type":"RollingUpdate"}` | Update strategy |

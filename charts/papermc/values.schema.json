@@ -94,6 +94,11 @@
         "annotations": {
           "type": "object",
           "description": "Service annotations"
+        },
+        "externalTrafficPolicy": {
+          "type": "string",
+          "enum": ["", "Cluster", "Local"],
+          "description": "External traffic policy for LoadBalancer/NodePort services"
         }
       },
       "required": ["type"]
