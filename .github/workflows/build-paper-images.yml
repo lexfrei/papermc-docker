@@ -20,13 +20,13 @@ jobs:
 
       - name: Install goPaperMC
         run: |
-          go install github.com/lexfrei/goPaperMC/cmd/papermc@v0.0.2
+          go install github.com/lexfrei/goPaperMC/cmd/papermc@v0.0.3
 
       - name: Get Build Matrix
         id: set-matrix
         run: |
-          # Get build matrix for GitHub Actions from the last 3 versions
-          MATRIX=$(papermc --limit=3 ci github-actions paper)
+          # Get build matrix for GitHub Actions from the last 3 stable versions
+          MATRIX=$(papermc ci github-actions paper --limit=3 --channel=stable)
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
 
       - name: Get Latest Version
