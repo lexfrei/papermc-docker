@@ -35,9 +35,10 @@ This server is compatible with:
 
 ## Features
 
-- Based on Eclipse Temurin 21 JRE
+- Based on Red Hat UBI9 OpenJDK 25 runtime with run-java.sh entrypoint
 - Automatically updated daily with the latest Paper builds
 - Optimized with [Aikar's flags](https://docs.papermc.io/paper/aikars-flags)
+- Automatic memory management with `-XX:MaxRAMPercentage=80%`
 - Simple socket-based health checks
 - Plugin installation support
 - Multi-architecture support (amd64, arm64)
@@ -111,10 +112,32 @@ For detailed chart documentation and configuration examples, see the [chart docu
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `JAVAFLAGS` | Java flags for optimized performance | Aikar's flags |
-| `PAPERMC_FLAGS` | Additional PaperMC flags | `--nojline` |
+| `JAVAFLAGS` | JVM flags for optimized performance | Aikar's flags |
+| `PAPERMC_FLAGS` | Additional PaperMC server flags | `--nojline` |
+| `JAVA_MAX_MEM_RATIO` | Max heap as percentage of container memory | `80` (80%) |
 
-> **Note**: Memory limits should be set using container runtime controls (e.g., Docker's `--memory` flag or Kubernetes resource limits).
+> **Note**: Memory is automatically managed using `-XX:MaxRAMPercentage`. The JVM will use up to 80% of container memory by default. Set container memory limits using Docker's `--memory` flag or Kubernetes resource limits.
+
+### Memory Configuration
+
+By default, the JVM uses 80% of container memory. To customize:
+
+```bash
+# Change memory percentage (use 75% instead of 80%)
+docker run -d \
+  -e JAVA_MAX_MEM_RATIO=75 \
+  --memory 4G \
+  lexfrei/papermc:latest
+
+# Disable automatic memory management and set explicit heap size
+docker run -d \
+  -e JAVA_MAX_MEM_RATIO=0 \
+  -e JAVAFLAGS="-Xms2G -Xmx3G" \
+  --memory 4G \
+  lexfrei/papermc:latest
+```
+
+When setting explicit memory (`-Xmx`), leave ~1GB headroom for JVM metaspace, native memory, and OS overhead.
 
 ### Resource Usage Recommendations
 
