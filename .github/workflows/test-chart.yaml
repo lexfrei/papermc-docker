@@ -2,6 +2,8 @@ name: Lint and Test Chart
 
 on:
   pull_request:
+    paths:
+      - 'charts/**'
   push:
     branches:
       - master
