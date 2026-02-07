@@ -51,4 +51,4 @@ jobs:
             --base master \
             --head "$BRANCH_NAME"
 
-          gh pr merge "$BRANCH_NAME" --auto --squash --delete-branch
+          gh pr merge "$BRANCH_NAME" --squash --delete-branch
