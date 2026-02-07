@@ -2,8 +2,6 @@ name: Lint and Test Chart
 
 on:
   pull_request:
-    paths:
-      - 'charts/**'
   push:
     branches:
       - master
@@ -12,7 +10,26 @@ on:
   workflow_dispatch:
 
 jobs:
+  changes:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      charts: ${{ steps.filter.outputs.charts }}
+    steps:
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            charts:
+              - 'charts/**'
+
   lint-test:
+    needs: changes
+    if: |
+      always() &&
+      (needs.changes.outputs.charts == 'true' || github.event_name != 'pull_request')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
