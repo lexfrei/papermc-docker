@@ -1,5 +1,5 @@
 # Base image: Red Hat UBI9 OpenJDK 25 runtime with run-java.sh entrypoint
-FROM registry.access.redhat.com/ubi9/openjdk-25-runtime:1.24-2.1770236076
+FROM registry.access.redhat.com/ubi9/openjdk-25-runtime:1.24-2.1771324970
 
 # Configure environment
 EXPOSE 25565/tcp 25565/udp 8123/tcp
