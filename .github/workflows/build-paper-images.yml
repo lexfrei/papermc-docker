@@ -70,7 +70,7 @@ jobs:
       
       # First build for amd64 only and export to Docker (for Trivy scanning)
       - name: Build for scanning
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         id: build
         with:
           context: .
@@ -99,7 +99,7 @@ jobs:
           
       # Build multi-platform and push, using the cache from previous build
       - name: Build and push all platforms
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           platforms: linux/amd64,linux/arm64
