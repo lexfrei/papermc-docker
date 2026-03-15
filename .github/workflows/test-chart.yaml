@@ -25,7 +25,7 @@ jobs:
             charts:
               - 'charts/**'
 
-  lint-test:
+  lint-test-run:
     needs: changes
     if: |
       always() &&
@@ -170,3 +170,18 @@ jobs:
           echo "## 🧪 Test Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "All validation tests completed for PaperMC chart" >> $GITHUB_STEP_SUMMARY
+
+  lint-test:
+    needs: [changes, lint-test-run]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check results
+        run: |
+          if [ "${{ needs.lint-test-run.result }}" = "success" ] || [ "${{ needs.lint-test-run.result }}" = "skipped" ]; then
+            echo "lint-test passed (actual result: ${{ needs.lint-test-run.result }})"
+            exit 0
+          else
+            echo "lint-test failed (actual result: ${{ needs.lint-test-run.result }})"
+            exit 1
+          fi
