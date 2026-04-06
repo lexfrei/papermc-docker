@@ -65,7 +65,7 @@ jobs:
           version: latest
 
       - name: Install ORAS
-        uses: oras-project/setup-oras@v1
+        uses: oras-project/setup-oras@v2
 
       - name: Install yq
         run: |
