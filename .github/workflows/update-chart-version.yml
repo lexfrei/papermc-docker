@@ -93,6 +93,20 @@ jobs:
         run: |
           BRANCH="chore/update-papermc-${{ inputs.version }}"
 
+          if [ -z "$(git status --porcelain charts/papermc)" ]; then
+            echo "Chart is already at ${{ inputs.version }}, nothing to do"
+            exit 0
+          fi
+
+          # The nightly build re-triggers this workflow for as long as the chart
+          # lags behind, so a PR for this version may already be open. Pushing the
+          # same branch again from a fresh master is a non-fast-forward and would
+          # fail every night until that PR merges.
+          if [ "$(gh pr list --head "$BRANCH" --state open --json number --jq 'length')" -gt 0 ]; then
+            echo "PR for $BRANCH is already open, nothing to do"
+            exit 0
+          fi
+
           git config user.name "lexfrei"
           git config user.email "f@lex.la"
 
@@ -104,7 +118,9 @@ jobs:
           - Bump chart version to ${{ steps.new.outputs.version }}
           - Regenerate documentation"
 
-          git push --set-upstream origin "$BRANCH"
+          # The branch can outlive a closed PR. It is fully generated, so replacing
+          # it is safe and keeps the job from tripping over its own leftovers.
+          git push --force --set-upstream origin "$BRANCH"
 
           gh pr create \
             --title "chore(chart): update PaperMC to ${{ inputs.version }}" \
