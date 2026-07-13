@@ -19,7 +19,18 @@ tests:
     asserts:
       - matchRegex:
           path: spec.template.spec.containers[0].image
-          pattern: ^lexfrei/papermc:\d+\.\d+\.\d+$
+          pattern: ^lexfrei/papermc:\d+(\.\d+){1,2}$
+
+  # Paper releases both dotted (1.21.11) and calendar (26.1.2, 26.2) versions,
+  # and calendar minors carry only two components.
+  - it: should set correct image with a calendar appVersion
+    template: statefulset.yaml
+    chart:
+      appVersion: "26.2"
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: ^lexfrei/papermc:\d+(\.\d+){1,2}$
 
   - it: should allow custom image tag
     template: statefulset.yaml

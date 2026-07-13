@@ -20,7 +20,7 @@ jobs:
 
       - name: Install goPaperMC
         run: |
-          go install github.com/lexfrei/goPaperMC/cmd/papermc@v0.0.3
+          go install github.com/lexfrei/goPaperMC/cmd/papermc@v0.0.4
 
       - name: Get Build Matrix
         id: set-matrix
@@ -32,9 +32,14 @@ jobs:
       - name: Get Latest Version
         id: set-latest
         run: |
-          # Get the latest version string
-          LATEST=$(papermc ci latest paper)
-          echo "latest=$LATEST" >> $GITHUB_OUTPUT
+          # Derive the latest version from the build matrix rather than from
+          # `papermc ci latest`, which ignores --channel and reports versions
+          # that only have pre-release builds (e.g. 26.2). The chart must track
+          # a version whose image this workflow actually builds and pushes.
+          # The matrix is ordered oldest to newest, so the last entry is latest.
+          LATEST=$(echo '${{ steps.set-matrix.outputs.matrix }}' | jq --raw-output '.include[-1].version')
+          echo "latest=$LATEST" >> "$GITHUB_OUTPUT"
+          echo "Latest stable version: $LATEST"
 
   build:
     needs: prepare
